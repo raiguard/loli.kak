@@ -32,7 +32,7 @@ lg_list: 1.1,1.7|src/main.rs⤬⤬⤬kakoune 2.6,2.12|src/main.rs⤬⤬⤬lorem 
 
 ## The buffer
 
-You can open a location list in a special buffer. This buffer attempts to open in the toolsclient, but falls back to the current client if that does not exist. You may search and filter this buffer however you wish, but it is read-only in order to preserve line numbers (they correspond with the indices in the list). Pressing enter on a line will jump you to that location in the jumpclient.
+You can open a location list in a special buffer. Special handling for specific window managers / terminal emulators will need to be added in order to replicate the vim behavior of a horizontal split, so for now it will just open in the current client. You may search and filter this buffer however you wish, but it is read-only in order to preserve line numbers (they correspond with the indices in the list). Pressing enter on a line will jump you to that location in the jumpclient.
 
 For our above example, the buffer will look like this:
 
@@ -54,4 +54,4 @@ There are many commands available for using location lists:
 - `(lg|lc)f[irst]`: Go to the first entry on the list.
 - `(lg|lc)l[ast]`: Go to the last entry on the list.
 - `(lg|lc)o[pen]`: Open the location list.
-- `(lg|lc)c[lose]`: Close the location list (TODO: determine how this will work with the toolsclient).
+- `(lg|lc)c[lose]`: Close the location list (TODO: determine how this will work with the splits).
