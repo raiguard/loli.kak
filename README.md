@@ -10,29 +10,33 @@ Similar to vim, there will be a global location list and client location lists. 
 
 ## Internal mechanisms
 
-Each location list is kept in a `range-specs` option and is formatted as `linestart.columnstart,lineend.columnend|FILENAME⤬⤬⤬preview` (e.g. `1.1,1.7|src/main.rs⤬⤬⤬kakoune`). Some tools might only output lines, in which case the ranges are defined as starting at column zero with a length equal to the line length. Kakoune automatically adjusts these ranges based on edits made, which will work to ensure that locations are not invalidated when file contents change.
+Each location list is represented by a series of `range-specs` options - one per file in the list. Each `range-specs` has the ranges as usual, and the "arbitrary text" is used for the preview. The first entry in the `range-specs` is a dummy entry used to hold the filename for display.
+
+There is also another `range-specs` that is used for highlighting the contents in a buffer. This one omits the dummy entry and includes the corresponding faces.
 
 Each location list also has an `index` option that corresponds to the current index the user has selected in the list.
 
 ### List options
 
-If a list is created in `client0`, the following options are created:
+If a list is created in `client0` while in the file `src/main.rs`, the following options are created:
 
 ```
 lw_client0_index: 0
-lw_client0_list: 1.1,1.7|src/main.rs⤬⤬⤬kakoune 2.6,2.12|src/main.rs⤬⤬⤬lorem kakoune ipsum
+lw_client0_list_srcmainrs: 0.0+0|src/main.rs 1.1,1.7|kakoune 2.6,2.12|lorem kakoune ipsum
+lw_client0_highlights_srcmainrs: 1.1,1.7|LLHighlight 2.6,2.12|LLHighlight
 ```
 
 If those locations are added to the global list, it will look like this:
 
 ```
 lg_index: 0
-lg_list: 1.1,1.7|src/main.rs⤬⤬⤬kakoune 2.6,2.12|src/main.rs⤬⤬⤬lorem kakoune ipsum
+lg_list_srcmainrs: 0.0+0|src/main.rs 1.1,1.7|kakoune 2.6,2.12|lorem kakoune ipsum
+lg_highlights_srcmainrs: 1.1,1.7|LLHighlight 2.6,2.12|LLHighlight
 ```
 
 ## The buffer
 
-You can open a location list in a special buffer. Special handling for specific window managers / terminal emulators will need to be added in order to replicate the vim behavior of a horizontal split, so for now it will just open in the current client. You may search and filter this buffer however you wish, but it is read-only in order to preserve line numbers (they correspond with the indices in the list). Pressing enter on a line will jump you to that location in the jumpclient.
+You can open a location list in a special buffer. Special handling for specific window managers / terminal emulators will need to be added in order to replicate the vim behavior of a horizontal split, so for now it will just open in the current client. You may search and filter this buffer however you wish, but it is read-only in order to preserve line numbers (they correspond with the indices in the list). Pressing enter on a line will jump you to that location in the corresponding client.
 
 For our above example, the buffer will look like this:
 
