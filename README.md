@@ -59,3 +59,18 @@ There are many commands available for using location lists:
 - `(lg|lc)l[ast]`: Go to the last entry on the list.
 - `(lg|lc)o[pen]`: Open the location list.
 - `(lg|lc)c[lose]`: Close the location list (TODO: determine how this will work with the splits).
+
+## User mode
+
+`location-list.kak` offers a `location-list` user mode for navigating the lists:
+
+- `j`: `lgnext`
+- `k`: `lgprev`
+- `h`: `lgfirst`
+- `l`: `lglast`
+- `o`: `lgopen`
+- `c`: `lgclose`
+
+Using capitol letters instead of lowercase will do all the same commands, but with the client list instead of the global list.
+
+An alternate user mode is available (`location-list-alt`) that has the reverse - client list by default, global list by capitol.
