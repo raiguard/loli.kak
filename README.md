@@ -6,15 +6,15 @@ In kakoune, there is no standard for location lists. Many scripts / plugins (inc
 
 A location list is a list of positions in files. These positions can be jumped to by pressing `enter` on the corresponding line in the location list buffer, or iterated with the various available commands.
 
-Similar to vim, there will be a global location list and window location lists. The global location list spans the entire project, whereas a window list is specific to a window. They are iterated via commands with the `lg` and `lw` prefixes, respectively.
+Similar to vim, there will be a global location list and client location lists. The global location list spans the entire project, whereas a client list is specific to a client. They are iterated via commands with the `lg` and `lc` prefixes, respectively.
 
-## How will they work?
+## Internal mechanisms
 
 Each location list is kept in a `range-specs` option and is formatted as `linestart.columnstart,lineend.columnend|FILENAME⤬⤬⤬preview` (e.g. `1.1,1.7|src/main.rs⤬⤬⤬kakoune`). Some tools might only output lines, in which case the ranges are defined as starting at column zero with a length equal to the line length. Kakoune automatically adjusts these ranges based on edits made, which will work to ensure that locations are not invalidated when file contents change.
 
 Each location list also has an `index` option that corresponds to the current index the user has selected in the list.
 
-### Example of options
+### List options
 
 If a list is created in `client0`, the following options are created:
 
@@ -30,7 +30,7 @@ lg_index: 0
 lg_list: 1.1,1.7|src/main.rs⤬⤬⤬kakoune 2.6,2.12|src/main.rs⤬⤬⤬lorem kakoune ipsum
 ```
 
-### The buffer
+## The buffer
 
 You can open a location list in a special buffer. This buffer attempts to open in the toolsclient, but falls back to the current client if that does not exist. You may search and filter this buffer however you wish, but it is read-only in order to preserve line numbers (they correspond with the indices in the list). Pressing enter on a line will jump you to that location in the jumpclient.
 
@@ -44,3 +44,14 @@ For our above example, the buffer will look like this:
 By default, the preview includes the entire line. There might be options to change this in the future. The `>` in the buffer denotes the currently selected entry.
 
 This buffer updates whenever the list does, so you always have the latest information.
+
+## The commands
+
+There are many commands available for using location lists:
+
+- `(lg|lc)n[ext]`: Go to the next entry on the list.
+- `(lg|lc)p[rev]`: Go to the previous entry on the list.
+- `(lg|lc)f[irst]`: Go to the first entry on the list.
+- `(lg|lc)l[ast]`: Go to the last entry on the list.
+- `(lg|lc)o[pen]`: Open the location list.
+- `(lg|lc)c[lose]`: Close the location list (TODO: determine how this will work with the toolsclient).
