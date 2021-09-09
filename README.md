@@ -27,7 +27,7 @@ If those locations are added to the global list, it will look like this:
 
 ```
 lg_index: 0
-lw_list: 1.1,1.7|src/main.rs⤬⤬⤬kakoune 2.6,2.12|src/main.rs⤬⤬⤬lorem kakoune ipsum
+lg_list: 1.1,1.7|src/main.rs⤬⤬⤬kakoune 2.6,2.12|src/main.rs⤬⤬⤬lorem kakoune ipsum
 ```
 
 ### The buffer
