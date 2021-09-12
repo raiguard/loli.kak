@@ -34,9 +34,19 @@ lg_list_srcmainrs: 0.0+0|src/main.rs 1.1,1.7|kakoune 2.6,2.12|lorem kakoune ipsu
 lg_highlights_srcmainrs: 1.1,1.7|LLHighlight 2.6,2.12|LLHighlight
 ```
 
+### Changing the contents of a list
+
+The `l(c|g)add` commands will allow you to add to the client list or global list respectively. These commands take two arguments:
+- filename (str) - The filename that the locations correspond with.
+- locations (range-specs) - The locations to add, with the preview text as the arbitrary string.
+
+Because of the `filename` requirement, that means you can only add locations for one file at a time. This is a limitation of the system.
+
+To remove items from the list, call `l(c|g)remove [filename] [index]`. if `filename` is omitted, all entries are removed. If `index` is omitted, all entries from that file are removed.
+
 ## The buffer
 
-You can open a location list in a special buffer. Special handling for specific window managers / terminal emulators will need to be added in order to replicate the vim behavior of a horizontal split, so for now it will just open in the current client. You may search and filter this buffer however you wish, but it is read-only in order to preserve line numbers (they correspond with the indices in the list). Pressing enter on a line will jump you to that location in the corresponding client.
+You can open a location list in a special buffer. You may search and filter this buffer however you wish, but it is read-only in order to preserve line numbers (they correspond with the indices in the list). Pressing enter on a line will jump you to that location in the corresponding client.
 
 For our above example, the buffer will look like this:
 
@@ -45,9 +55,11 @@ For our above example, the buffer will look like this:
   src/main.rs:2:6 | lorem kakoune ipsum
 ```
 
-By default, the preview includes the entire line. There might be options to change this in the future. The `>` in the buffer denotes the currently selected entry.
+By default, the preview includes the entire line. There might be options to change this in the future. The `>` in the buffer denotes the currently selected entry (subject to change).
 
 This buffer updates whenever the list does, so you always have the latest information.
+
+For now, the buffer will simply open in the current client. An interface for windowing will have to be set up in the future, since kak does not do windowing whatsoever.
 
 ## The commands
 
@@ -60,12 +72,28 @@ There are many commands available for using location lists:
 - `(lg|lc)o[pen]`: Open the location list.
 - `(lg|lc)c[lose]`: Close the location list (TODO: determine how this will work with the splits).
 
+After skimming vim docs, here are all of the things I wish to add:
+
+above
+below
+before
+after
+file
+first
+last
+add (add client list to global list)
+do
+
+- remember last ten lists for each client and global
+
 ## User mode
 
 `location-list.kak` offers a `location-list` user mode for navigating the lists:
 
-- `j`: `lgnext`
-- `k`: `lgprev`
+- `n`: `lgnext`
+- `p`: `lgprev`
+- `j`: `lgbelow`
+- `k`: `lgabove`
 - `h`: `lgfirst`
 - `l`: `lglast`
 - `o`: `lgopen`
