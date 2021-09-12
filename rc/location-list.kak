@@ -1,52 +1,69 @@
 # --------------------------------------------------
 # COMMANDS
 
-def -docstring "Go to the next entry on the global list." lgnext %{
-    echo "Go to the next entry on the global list."
+
+def -docstring "(global) next location below current line" lgbelow %{
+    echo "(global) next location below current line"
 }
 
-def -docstring "Go to the previous entry on the global list." lgprev %{
-    echo "Go to the previous entry on the global list."
+def -docstring "(global) next location" lgnext %{
+    echo "(global) next location"
 }
 
-def -docstring "Go to the first entry on the global list." lgfirst %{
-    echo "Go to the first entry on the global list."
+def -docstring "(global) previous location above current line" lgabove %{
+    echo "(global) previous location above current line"
 }
 
-def -docstring "Go to the last entry on the global list." lglast %{
-    echo "Go to the last entry on the global list."
+def -docstring "(global) previous location" lgprev %{
+    echo "(global) previous location"
 }
 
-def -docstring "Open the global location list." lgopen %{
-    echo "Open the global location list."
+def -docstring "(global) first location" lgfirst %{
+    echo "(global) first location"
 }
 
-def -docstring "Close the global location list." lgclose %{
-    echo "Close the global location list."
+def -docstring "(global) last location" lglast %{
+    echo "(global) last location"
 }
 
-def -docstring "Go to the next entry on the client list." lcnext %{
-    echo "Go to the next entry on the client list."
+def -docstring "(global) open list buffer" lgopen %{
+    echo "(global) open list buffer"
 }
 
-def -docstring "Go to the previous entry on the client list." lcprev %{
-    echo "Go to the previous entry on the client list."
+def -docstring "(global) close list buffer" lgclose %{
+    echo "(global) close list buffer"
 }
 
-def -docstring "Go to the first entry on the client list." lcfirst %{
-    echo "Go to the first entry on the client list."
+def -docstring "(client) next location below current line" lcbelow %{
+    echo "(client) next location below current line"
 }
 
-def -docstring "Go to the last entry on the client list." lclast %{
-    echo "Go to the last entry on the client list."
+def -docstring "(client) next location" lcnext %{
+    echo "(client) next location"
 }
 
-def -docstring "Open the client location list." lcopen %{
-    echo "Open the client location list."
+def -docstring "(client) previous location above current line" lcabove %{
+    echo "(client) previous location above current line"
 }
 
-def -docstring "Close the client location list." lcclose %{
-    echo "Close the client location list."
+def -docstring "(client) previous location" lcprev %{
+    echo "(client) previous location"
+}
+
+def -docstring "(client) first location" lcfirst %{
+    echo "(client) first location"
+}
+
+def -docstring "(client) last location" lclast %{
+    echo "(client) last location"
+}
+
+def -docstring "(client) open list buffer" lcopen %{
+    echo "(client) open list buffer"
+}
+
+def -docstring "(client) close list buffer" lcclose %{
+    echo "(client) close list buffer"
 }
 
 # --------------------------------------------------
@@ -54,38 +71,38 @@ def -docstring "Close the client location list." lcclose %{
 
 # Default user mode
 declare-user-mode location-list
-map global location-list j ": lgnext<ret>" -docstring "Go to the next entry on the global list."
-map global location-list n ": lgnext<ret>" -docstring "Go to the next entry on the global list."
-map global location-list k ": lgprev<ret>" -docstring "Go to the previous entry on the global list."
-map global location-list p ": lgnext<ret>" -docstring "Go to the next entry on the global list."
-map global location-list h ": lgfirst<ret>" -docstring "Go to the first entry on the global list."
-map global location-list l ": lglast<ret>" -docstring "Go to the last entry on the global list."
-map global location-list o ": lgopen<ret>" -docstring "Open the global location list."
-map global location-list c ": lgclose<ret>" -docstring "Close the global location list."
-map global location-list J ": lcnext<ret>" -docstring "Go to the next entry on the client list."
-map global location-list N ": lcnext<ret>" -docstring "Go to the next entry on the client list."
-map global location-list K ": lcprev<ret>" -docstring "Go to the previous entry on the client list."
-map global location-list P ": lcprev<ret>" -docstring "Go to the previous entry on the client list."
-map global location-list H ": lcfirst<ret>" -docstring "Go to the first entry on the client list."
-map global location-list L ": lclast<ret>" -docstring "Go to the last entry on the client list."
-map global location-list O ": lcopen<ret>" -docstring "Open the client location list."
-map global location-list C ": lcclose<ret>" -docstring "Close the client location list."
+map global location-list j ": lgbelow<ret>" -docstring "(global) next location below current line"
+map global location-list n ": lgnext<ret>" -docstring "(global) next location"
+map global location-list k ": lgabove<ret>" -docstring "(global) previous location above current line"
+map global location-list p ": lgprev<ret>" -docstring "(global) previous location"
+map global location-list h ": lgfirst<ret>" -docstring "(global) first location"
+map global location-list l ": lglast<ret>" -docstring "(global) last location"
+map global location-list o ": lgopen<ret>" -docstring "(global) open list buffer"
+map global location-list c ": lgclose<ret>" -docstring "(global) close list buffer"
+map global location-list J ": lcbelow<ret>" -docstring "(client) next location below current line"
+map global location-list N ": lcnext<ret>" -docstring "(client) next location"
+map global location-list K ": lcabove<ret>" -docstring "(client) previous location above current line"
+map global location-list P ": lcprev<ret>" -docstring "(client) previous location"
+map global location-list H ": lcfirst<ret>" -docstring "(client) first location"
+map global location-list L ": lclast<ret>" -docstring "(client) last location"
+map global location-list O ": lcopen<ret>" -docstring "(client) open list buffer"
+map global location-list C ": lcclose<ret>" -docstring "(client) close list buffer"
 
-# Alternate (reversed) user mode
+# Alternate user mode
 declare-user-mode location-list-alt
-map global location-list-alt j ": lcnext<ret>" -docstring "Go to the next entry on the client list."
-map global location-list-alt n ": lcnext<ret>" -docstring "Go to the next entry on the client list."
-map global location-list-alt k ": lcprev<ret>" -docstring "Go to the previous entry on the client list."
-map global location-list-alt p ": lcprev<ret>" -docstring "Go to the previous entry on the client list."
-map global location-list-alt h ": lcfirst<ret>" -docstring "Go to the first entry on the client list."
-map global location-list-alt l ": lclast<ret>" -docstring "Go to the last entry on the client list."
-map global location-list-alt o ": lcopen<ret>" -docstring "Open the client location list."
-map global location-list-alt c ": lcclose<ret>" -docstring "Close the client location list."
-map global location-list-alt J ": lgnext<ret>" -docstring "Go to the next entry on the global list."
-map global location-list-alt N ": lgnext<ret>" -docstring "Go to the next entry on the global list."
-map global location-list-alt K ": lgprev<ret>" -docstring "Go to the previous entry on the global list."
-map global location-list-alt P ": lgprev<ret>" -docstring "Go to the previous entry on the global list."
-map global location-list-alt H ": lgfirst<ret>" -docstring "Go to the first entry on the global list."
-map global location-list-alt L ": lglast<ret>" -docstring "Go to the last entry on the global list."
-map global location-list-alt O ": lgopen<ret>" -docstring "Open the global location list."
-map global location-list-alt C ": lgclose<ret>" -docstring "Close the global location list."
+map global location-list-alt j ": lcbelow<ret>" -docstring "(client) next location below current line"
+map global location-list-alt n ": lcnext<ret>" -docstring "(client) next location"
+map global location-list-alt k ": lcabove<ret>" -docstring "(client) previous location above current line"
+map global location-list-alt p ": lcprev<ret>" -docstring "(client) previous location"
+map global location-list-alt h ": lcfirst<ret>" -docstring "(client) first location"
+map global location-list-alt l ": lclast<ret>" -docstring "(client) last location"
+map global location-list-alt o ": lcopen<ret>" -docstring "(client) open list buffer"
+map global location-list-alt c ": lcclose<ret>" -docstring "(client) close list buffer"
+map global location-list-alt J ": lgbelow<ret>" -docstring "(global) next location below current line"
+map global location-list-alt N ": lgnext<ret>" -docstring "(global) next location"
+map global location-list-alt K ": lgabove<ret>" -docstring "(global) previous location above current line"
+map global location-list-alt P ": lgprev<ret>" -docstring "(global) previous location"
+map global location-list-alt H ": lgfirst<ret>" -docstring "(global) first location"
+map global location-list-alt L ": lglast<ret>" -docstring "(global) last location"
+map global location-list-alt O ": lgopen<ret>" -docstring "(global) open list buffer"
+map global location-list-alt C ": lgclose<ret>" -docstring "(global) close list buffer"
