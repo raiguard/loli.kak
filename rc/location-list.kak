@@ -1,6 +1,5 @@
 # --------------------------------------------------
-# COMMANDS
-
+# USER-FACING COMMANDS
 
 def -docstring "(global) next location below current line" lgbelow %{
     echo "(global) next location below current line"
@@ -106,3 +105,40 @@ map global location-list-alt H ": lgfirst<ret>" -docstring "(global) first locat
 map global location-list-alt L ": lglast<ret>" -docstring "(global) last location"
 map global location-list-alt O ": lgopen<ret>" -docstring "(global) open list buffer"
 map global location-list-alt C ": lgclose<ret>" -docstring "(global) close list buffer"
+
+# --------------------------------------------------
+# INTERNAL COMMANDS
+
+# def -params 3 lcadd %{
+
+# }
+
+decl int ll_index
+
+decl str ll_file_key
+decl str ll_global_key "LLGLOBAL"
+
+face global ll_highlight ",,rgb:%opt{magenta}+u"
+
+# Remove all non-alphanumeric characters from the filename
+def -hidden -params 1 ll-get-option-key %{
+    eval %sh{
+        sanitized=$(echo $1 | tr -cd '[:alnum:]_')
+        echo "set window ll_file_key $sanitized"
+    }
+}
+
+def -params 3 lgadd %{
+    ll-get-option-key %arg{1}
+    eval %sh{
+        listoptionname=ll_list_${kak_opt_ll_global_key}_${kak_opt_ll_file_key}
+        highlightoptionname=ll_highlight_${kak_opt_ll_global_key}_${kak_opt_ll_file_key}
+        echo "
+            decl range-specs $listoptionname
+            decl range-specs $highlightoptionname
+            set -add global $listoptionname '$2|$3'
+            set -add global $highlightoptionname '$2|ll_highlight'
+            addhl -override window/ ranges $highlightoptionname
+        "
+    }
+}
