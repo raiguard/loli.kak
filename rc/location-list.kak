@@ -140,9 +140,6 @@ def -params 3 lgadd %{
     }
 }
 
-def -params 1 lgto %{
-    eval %sh{
-        listoptionname=ll_list_${kak_opt_ll_global_key}_${kak_opt_ll_file_key}
-
-    }
+def -hidden -params 1 lgnew %{
+    eval %sh{ $kak_opt_ll_cmd new $1 }
 }
