@@ -107,14 +107,15 @@ map global location-list-alt O ": lgopen<ret>" -docstring "(global) open list bu
 map global location-list-alt C ": lgclose<ret>" -docstring "(global) close list buffer"
 
 # --------------------------------------------------
-# INTERNAL COMMANDS
+# INTERNALS
 
+decl str ll_cmd
 decl int ll_index
 
 decl str ll_file_key
 decl str ll_global_key "LLGLOBAL"
 
-face global ll_highlight ",,rgb:%opt{magenta}+u"
+face global ll_highlight ",,rgb:c678dd+u"
 
 # Remove all non-alphanumeric characters from the filename
 def -hidden -params 1 ll-get-option-key %{
