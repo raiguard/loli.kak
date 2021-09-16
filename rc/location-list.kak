@@ -109,10 +109,6 @@ map global location-list-alt C ": lgclose<ret>" -docstring "(global) close list 
 # --------------------------------------------------
 # INTERNAL COMMANDS
 
-# def -params 3 lcadd %{
-
-# }
-
 decl int ll_index
 
 decl str ll_file_key
@@ -140,5 +136,12 @@ def -params 3 lgadd %{
             set -add global $highlightoptionname '$2|ll_highlight'
             addhl -override window/ ranges $highlightoptionname
         "
+    }
+}
+
+def -params 1 lgto %{
+    eval %sh{
+        listoptionname=ll_list_${kak_opt_ll_global_key}_${kak_opt_ll_file_key}
+
     }
 }

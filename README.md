@@ -21,17 +21,17 @@ Each location list also has an `index` option that corresponds to the current in
 If a list is created in `client0` while in the file `src/main.rs`, the following options are created:
 
 ```
-lw_client0_index: 0
-lw_client0_list_srcmainrs: 0.0+0|src/main.rs 1.1,1.7|kakoune 2.6,2.12|lorem kakoune ipsum
-lw_client0_highlights_srcmainrs: 1.1,1.7|LLHighlight 2.6,2.12|LLHighlight
+ll_client0_index: 0
+ll_client0_list_srcmainrs: 0.0+0|src/main.rs 1.1,1.7|kakoune 2.6,2.12|lorem kakoune ipsum
+ll_client0_highlights_srcmainrs: 1.1,1.7|LLHighlight 2.6,2.12|LLHighlight
 ```
 
 If those locations are added to the global list, it will look like this:
 
 ```
-lg_index: 0
-lg_list_srcmainrs: 0.0+0|src/main.rs 1.1,1.7|kakoune 2.6,2.12|lorem kakoune ipsum
-lg_highlights_srcmainrs: 1.1,1.7|LLHighlight 2.6,2.12|LLHighlight
+ll_index: 0
+ll_list_srcmainrs: 0.0+0|src/main.rs 1.1,1.7|kakoune 2.6,2.12|lorem kakoune ipsum
+ll_highlights_srcmainrs: 1.1,1.7|LLHighlight 2.6,2.12|LLHighlight
 ```
 
 ### Changing the contents of a list
