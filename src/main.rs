@@ -52,7 +52,6 @@ fn main() -> Result<(), Box<dyn Error>> {
                 Some(client_name) => client_name,
                 None => "LOLIGLOBAL".to_string(),
             };
-            util::kak_print(&option_name);
             let list = LocationList::new(option_name, input)?;
         }
         _ => (),
