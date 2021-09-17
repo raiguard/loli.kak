@@ -97,6 +97,7 @@ impl LocationList {
 
     pub fn from_grep(name: &str, input: String) -> Result<Self, LocationListErr> {
         static LINE_REGEX: OnceCell<Regex> = OnceCell::new();
+        // TODO: Make columns optional
         let regex = LINE_REGEX.get_or_init(|| Regex::new(r"^(.*):(\d+):(\d+):(.*)$").unwrap());
 
         let mut locations = Vec::new();
@@ -139,12 +140,8 @@ impl LocationList {
                 filename: filename.to_string(),
                 range: KakouneRange {
                     start: KakounePosition { line, column },
-                    end: KakounePosition {
-                        line,
-                        column: column + 1,
-                    },
+                    end: KakounePosition { line, column },
                 },
-                // range: KakouneRange::from_parts(line, column, line, column + 1),
                 preview: preview.to_string(),
             })
         }
@@ -154,6 +151,40 @@ impl LocationList {
             locations,
             index: 0,
         })
+    }
+
+    // For now, just generate highlighter ranges so we can see it in action
+    pub fn gen_ranges(&self, timestamp: u32) {
+        let mut options = HashMap::new();
+
+        for location in &self.locations {
+            let filename = location
+                .filename
+                .replace(|c: char| !c.is_alphanumeric(), "");
+
+            let mut entries = options.entry(filename).or_insert(Vec::new());
+
+            entries.push(format!("{}|{}", location.range, "loli_highlight"));
+        }
+
+        println!(
+            "{}",
+            options
+                .iter()
+                .map(|(name, members)| {
+                    format!(
+                        "decl range-specs loli_{0}_{1}_highlight
+                        set global loli_{0}_{1}_highlight {2} '{3}'
+                        # This needs to be set in the buffers when they're opened
+                        # add-highlighter buffer/ ranges loli_{0}_{1}_highlight",
+                        self.name,
+                        name,
+                        timestamp,
+                        members.iter().join("' '")
+                    )
+                })
+                .join("\n")
+        );
     }
 }
 

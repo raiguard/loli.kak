@@ -13,7 +13,7 @@ define-command -params .. -file-completion -docstring %{
      output=$(mktemp -d "${TMPDIR:-/tmp}"/kak-grep.XXXXXXXX)/fifo
      rg --vimgrep --trim  "$@" | tr -d '\r' > ${output} 2>&1
 
-     $kak_opt_loli_cmd grep "${output}"
+     $kak_opt_loli_cmd grep -t $kak_timestamp "${output}"
 }}
 
 define-command -params .. -file-completion -docstring %{
@@ -28,5 +28,5 @@ define-command -params .. -file-completion -docstring %{
      output=$(mktemp -d "${TMPDIR:-/tmp}"/kak-grep.XXXXXXXX)/fifo
      rg --vimgrep --trim  "$@" | tr -d '\r' > ${output} 2>&1
 
-     $kak_opt_loli_cmd -c $kak_client grep "${output}"
+     $kak_opt_loli_cmd -c $kak_client grep -t $kak_timestamp "${output}"
 }}

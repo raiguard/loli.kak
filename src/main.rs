@@ -42,9 +42,21 @@ enum Command {
     /// Cleans up (deletes) the store file for the given session
     Clean,
     /// Creates a new location list based on grep output
-    Grep { filename: PathBuf },
+    Grep {
+        /// The current kakoune timestamp
+        #[structopt(short, long)]
+        timestamp: u32,
+        /// The file containing the grep output. Grep output must include column numbers
+        filename: PathBuf,
+    },
     /// Creates a new location list from a str-list kakoune setting
-    New { list: String },
+    New {
+        /// The current kakoune timestamp
+        #[structopt(short, long)]
+        timestamp: u32,
+        /// The contents of the `str-list` option
+        list: String,
+    },
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -61,14 +73,21 @@ fn main() -> Result<(), Box<dyn Error>> {
             fs::remove_file(get_local_path(&app.session_name))
                 .expect("Could not delete store file");
         }
-        Command::Grep { filename } => {
+        Command::Grep {
+            filename,
+            timestamp,
+        } => {
             let mut lists = Lists::from_file(&get_local_path(&app.session_name))?;
             let input = fs::read_to_string(filename)?;
             let list = LocationList::from_grep(&option_name, input)?;
+            list.gen_ranges(timestamp);
             lists.lists.insert(option_name, list);
             lists.write();
         }
-        Command::New { list: input } => {
+        Command::New {
+            list: input,
+            timestamp,
+        } => {
             let mut lists = Lists::from_file(&get_local_path(&app.session_name))?;
             let list = LocationList::from_str_list(&option_name, input)?;
             lists.lists.insert(option_name, list);
