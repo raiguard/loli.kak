@@ -15,7 +15,7 @@ use types::*;
 
 #[derive(StructOpt)]
 #[structopt(
-    name = "kak-ll",
+    name = "kak-loli",
     about = "An implementation of location lists for kakoune."
 )]
 struct App {
@@ -63,11 +63,11 @@ fn init(app: &App) {
     let script: &str = include_str!("../rc/location-list.kak");
     let cmd = env::current_exe().unwrap();
     let cmd = cmd.to_str().unwrap();
-    let ll_cmd = format!(
-        "set global ll_cmd '{} -s {}'",
+    let loli_cmd = format!(
+        "set global loli_cmd '{} -s {}'",
         util::editor_escape(cmd),
         app.session_name
     );
 
-    println!("{}\n{}", script, ll_cmd);
+    println!("{}\n{}", script, loli_cmd);
 }

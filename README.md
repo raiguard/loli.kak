@@ -1,6 +1,6 @@
-# kak-ll
+# kak-loli
 
-In kakoune, there is no standard for location lists. Many scripts / plugins (including the built-in `grep.kak`) implement a goto kind of functionality, but it is not standardized whatsoever and is easily prone to breakage. `kak-ll` aims to standardize these lists and provide a common interface for navigating and manipulating location lists.
+In kakoune, there is no standard for location lists. Many scripts / plugins (including the built-in `grep.kak`) implement a goto kind of functionality, but it is not standardized whatsoever and is easily prone to breakage. `kak-loli` aims to standardize these lists and provide a common interface for navigating and manipulating location lists.
 
 ## What is a location list?
 
@@ -21,17 +21,17 @@ Each location list also has an `index` option that corresponds to the current in
 If a list is created in `client0` while in the file `src/main.rs`, the following options are created:
 
 ```
-ll_client0_index: 0
-ll_client0_list_srcmainrs: 0.0+0|src/main.rs 1.1,1.7|kakoune 2.6,2.12|lorem kakoune ipsum
-ll_client0_highlights_srcmainrs: 1.1,1.7|LLHighlight 2.6,2.12|LLHighlight
+loli_client0_index: 0
+loli_client0_list_srcmainrs: 0.0+0|src/main.rs 1.1,1.7|kakoune 2.6,2.12|lorem kakoune ipsum
+loli_client0_highlights_srcmainrs: 1.1,1.7|LLHighlight 2.6,2.12|LLHighlight
 ```
 
 If those locations are added to the global list, it will look like this:
 
 ```
-ll_index: 0
-ll_list_srcmainrs: 0.0+0|src/main.rs 1.1,1.7|kakoune 2.6,2.12|lorem kakoune ipsum
-ll_highlights_srcmainrs: 1.1,1.7|LLHighlight 2.6,2.12|LLHighlight
+loli_index: 0
+loli_list_srcmainrs: 0.0+0|src/main.rs 1.1,1.7|kakoune 2.6,2.12|lorem kakoune ipsum
+loli_highlights_srcmainrs: 1.1,1.7|LLHighlight 2.6,2.12|LLHighlight
 ```
 
 ### Changing the contents of a list
@@ -54,7 +54,7 @@ The option passed is a `LocationList`, which is implemented as a `str-list` in k
 "src/main.rs|1.1,1.3|foo src/main.rs|5.3,5.6|bar"
 ```
 
-`kak-ll` will convert this into multiple proper `range-specs` options to implement the list behavior.
+`kak-loli` will convert this into multiple proper `range-specs` options to implement the list behavior.
 
 ## The buffer
 

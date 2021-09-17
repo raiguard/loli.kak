@@ -109,32 +109,32 @@ map global location-list-alt C ": lgclose<ret>" -docstring "(global) close list 
 # --------------------------------------------------
 # INTERNALS
 
-decl str ll_cmd
-decl int ll_index
+decl str loli_cmd
+decl int loli_index
 
-decl str ll_file_key
-decl str ll_global_key "LLGLOBAL"
+decl str loli_file_key
+decl str loli_global_key "LLGLOBAL"
 
-face global ll_highlight ",,rgb:c678dd+u"
+face global loli_highlight ",,rgb:c678dd+u"
 
 # Remove all non-alphanumeric characters from the filename
-def -hidden -params 1 ll-get-option-key %{
+def -hidden -params 1 loli-get-option-key %{
     eval %sh{
         sanitized=$(echo $1 | tr -cd '[:alnum:]_')
-        echo "set window ll_file_key $sanitized"
+        echo "set window loli_file_key $sanitized"
     }
 }
 
 def -params 3 lgadd %{
-    ll-get-option-key %arg{1}
+    loli-get-option-key %arg{1}
     eval %sh{
-        listoptionname=ll_list_${kak_opt_ll_global_key}_${kak_opt_ll_file_key}
-        highlightoptionname=ll_highlight_${kak_opt_ll_global_key}_${kak_opt_ll_file_key}
+        listoptionname=loli_list_${kak_opt_loli_global_key}_${kak_opt_loli_file_key}
+        highlightoptionname=loli_highlight_${kak_opt_loli_global_key}_${kak_opt_loli_file_key}
         echo "
             decl range-specs $listoptionname
             decl range-specs $highlightoptionname
             set -add global $listoptionname '$2|$3'
-            set -add global $highlightoptionname '$2|ll_highlight'
+            set -add global $highlightoptionname '$2|loli_highlight'
             addhl -override window/ ranges $highlightoptionname
         "
     }
@@ -147,9 +147,9 @@ def -hidden -params 1 lgnew %{
     eval %sh{
         listname=kak_quoted_opt_$1
         list=${!listname}
-        # echo "echo -debug '$kak_quoted_opt_ll_test_list'"
+        # echo "echo -debug '$kak_quoted_opt_loli_test_list'"
         # echo "echo -debug '$listname $list'"
-        $kak_opt_ll_cmd new "$list"
+        $kak_opt_loli_cmd new "$list"
     }
 }
 
@@ -157,8 +157,8 @@ def -hidden -params 1 lcnew %{
     eval %sh{
         listname=kak_quoted_opt_$1
         list=${!listname}
-        # echo "echo -debug '$kak_quoted_opt_ll_test_list'"
+        # echo "echo -debug '$kak_quoted_opt_loli_test_list'"
         # echo "echo -debug '$listname $list'"
-        $kak_opt_ll_cmd -c "$kak_client" new "$list"
+        $kak_opt_loli_cmd -c "$kak_client" new "$list"
     }
 }
