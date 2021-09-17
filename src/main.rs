@@ -1,9 +1,17 @@
 #![allow(dead_code, unused)]
 
+use itertools::Itertools;
+use std::collections::HashSet;
 use std::env;
+use std::fmt::Display;
+use std::path::PathBuf;
+use std::str::FromStr;
 use structopt::StructOpt;
 
+mod types;
 mod util;
+
+use types::*;
 
 #[derive(StructOpt)]
 #[structopt(
@@ -25,7 +33,7 @@ struct App {
 enum Command {
     /// Creates a new location list
     New {
-        input: String,
+        list: String,
     },
     Next,
     Prev,
@@ -38,8 +46,13 @@ fn main() {
 
     match app.cmd {
         Command::Init => init(&app),
-        Command::New { input } => {
-            println!("echo -debug {}", input)
+        Command::New { list } => {
+            println!("echo -debug '{}'", util::editor_escape(&list))
+            // let option_name = match app.client_name {
+            //     Some(client_name) => client_name,
+            //     None => "LLGLOBAL".to_string(),
+            // };
+            // println!("echo -debug '{}'", util::editor_escape(&option_name));
         }
         _ => (),
     }
@@ -55,5 +68,6 @@ fn init(app: &App) {
         util::editor_escape(cmd),
         app.session_name
     );
+
     println!("{}\n{}", script, ll_cmd);
 }

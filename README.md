@@ -1,6 +1,6 @@
-# location-list.kak
+# kak-ll
 
-In kakoune, there is no standard for location lists. Many scripts / plugins (including the built-in `grep.kak`) implement a goto kind of functionality, but it is not standardized whatsoever and is easily prone to breakage. `location-list.kak` aims to standardize these lists and provide a common interface for navigating and manipulating location lists.
+In kakoune, there is no standard for location lists. Many scripts / plugins (including the built-in `grep.kak`) implement a goto kind of functionality, but it is not standardized whatsoever and is easily prone to breakage. `kak-ll` aims to standardize these lists and provide a common interface for navigating and manipulating location lists.
 
 ## What is a location list?
 
@@ -43,6 +43,18 @@ The `l(c|g)add` commands will allow you to add to the client list or global list
 Because of the `filename` requirement, that means you can only add locations for one file at a time. This is a limitation of the system.
 
 To remove items from the list, call `l(c|g)remove [filename] [index]`. if `filename` is omitted, all entries are removed. If `index` is omitted, all entries from that file are removed.
+
+### Creating a list
+
+The `l(c|g)new` command will create a new location list, overriding the old list. The old list will go into the history (TODO). The command takes a single argument, which is a kakoune option name.
+
+The option passed is a `LocationList`, which is implemented as a `str-list` in kak. The contents of the list are similar to `range-specs`, but have an extra field at the beginning for the filename:
+
+```
+"src/main.rs|1.1,1.3|foo src/main.rs|5.3,5.6|bar"
+```
+
+`kak-ll` will convert this into multiple proper `range-specs` options to implement the list behavior.
 
 ## The buffer
 

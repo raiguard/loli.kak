@@ -140,6 +140,25 @@ def -params 3 lgadd %{
     }
 }
 
+# I don't know why. I don't want to know why. I shouldn't have to wonder why.
+# But for whatever reason, if I remove the comments in the two following commands, ${!listname} stops working
+
 def -hidden -params 1 lgnew %{
-    eval %sh{ $kak_opt_ll_cmd new $1 }
+    eval %sh{
+        listname=kak_quoted_opt_$1
+        list=${!listname}
+        # echo "echo -debug '$kak_quoted_opt_ll_test_list'"
+        # echo "echo -debug '$listname $list'"
+        $kak_opt_ll_cmd new "$list"
+    }
+}
+
+def -hidden -params 1 lcnew %{
+    eval %sh{
+        listname=kak_quoted_opt_$1
+        list=${!listname}
+        # echo "echo -debug '$kak_quoted_opt_ll_test_list'"
+        # echo "echo -debug '$listname $list'"
+        $kak_opt_ll_cmd -c "$kak_client" new "$list"
+    }
 }
