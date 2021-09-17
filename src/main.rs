@@ -59,12 +59,17 @@ fn main() -> Result<(), Box<dyn Error>> {
     match app.cmd {
         Command::Init => init(&app),
         Command::Grep { filename } => {
+            let mut lists = Lists::from_file(&get_local_path(&app.session_name))?;
             let input = fs::read_to_string(filename)?;
-            let list = LocationList::from_grep(option_name, input)?;
-            util::kak_print(&format!("{:#?}", list));
+            let list = LocationList::from_grep(&option_name, input)?;
+            lists.lists.insert(option_name, list);
+            lists.write();
         }
         Command::New { list: input } => {
-            let list = LocationList::from_str_list(option_name, input)?;
+            let mut lists = Lists::from_file(&get_local_path(&app.session_name))?;
+            let list = LocationList::from_str_list(&option_name, input)?;
+            lists.lists.insert(option_name, list);
+            lists.write();
         }
         _ => (),
     };
@@ -74,7 +79,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 fn init(app: &App) {
     let local_path = get_local_path(&app.session_name);
-    File::create(&local_path).expect("Could not create store file");
+
+    // Creates file and populates it with empty, but valid, data
+    Lists::new(&local_path);
 
     // Print kakscript commands for init
     let cmd = env::current_exe().unwrap();

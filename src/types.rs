@@ -1,8 +1,12 @@
 use itertools::Itertools;
 use once_cell::sync::OnceCell;
 use regex::{Match, Regex};
-use std::collections::HashSet;
+use serde_derive::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::error::Error;
 use std::fmt::Display;
+use std::fs;
+use std::fs::File;
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::string;
@@ -10,16 +14,51 @@ use thiserror::Error;
 
 use crate::util;
 
-pub type Lists = HashSet<LocationList>;
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Lists {
+    pub lists: HashMap<String, LocationList>,
+    path: PathBuf,
+}
 
-#[derive(Debug)]
+impl Lists {
+    pub fn new(path: &PathBuf) -> Result<Self, Box<dyn Error>> {
+        let lists = Lists {
+            path: path.clone(),
+            lists: HashMap::new(),
+        };
+        fs::write(
+            path,
+            serde_json::to_string(&lists).expect("Could not serialize default store"),
+        )
+        .expect("Could not write to store");
+
+        Ok(lists)
+    }
+
+    pub fn from_file(path: &PathBuf) -> Result<Self, Box<dyn Error>> {
+        let file = fs::read_to_string(&path).expect("Could not read store file");
+        let lists: Lists = serde_json::from_str(&file).expect("Could not deserialize store");
+        Ok(lists)
+    }
+
+    pub fn write(&self) {
+        fs::write(
+            &self.path,
+            serde_json::to_string(&self).expect("Could not serialize store"),
+        )
+        .expect("Could not write to store");
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize)]
 pub struct LocationList {
     pub locations: Vec<Location>,
     pub name: String,
+    pub index: u32,
 }
 
 impl LocationList {
-    pub fn from_str_list(name: String, input: String) -> Result<Self, LocationListErr> {
+    pub fn from_str_list(name: &str, input: String) -> Result<Self, LocationListErr> {
         static LIST_REGEX: OnceCell<Regex> = OnceCell::new();
         let regex = LIST_REGEX
             .get_or_init(|| Regex::new(r"'(.*?)\|(\d+)\.(\d+),(\d+)\.(\d+)\|(.*?)'").unwrap());
@@ -48,10 +87,14 @@ impl LocationList {
             }
         }
 
-        Ok(LocationList { name, locations })
+        Ok(LocationList {
+            name: name.to_string(),
+            locations,
+            index: 0,
+        })
     }
 
-    pub fn from_grep(name: String, input: String) -> Result<Self, LocationListErr> {
+    pub fn from_grep(name: &str, input: String) -> Result<Self, LocationListErr> {
         static LINE_REGEX: OnceCell<Regex> = OnceCell::new();
         let regex = LINE_REGEX.get_or_init(|| Regex::new(r"^(.*):(\d+):(\d+):(.*)$").unwrap());
 
@@ -105,7 +148,11 @@ impl LocationList {
             })
         }
 
-        Ok(LocationList { name, locations })
+        Ok(LocationList {
+            name: name.to_string(),
+            locations,
+            index: 0,
+        })
     }
 }
 
@@ -119,14 +166,14 @@ pub enum LocationListErr {
     InvalidGrepFmt,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Location {
     filename: String,
     range: KakouneRange,
     preview: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct KakounePosition {
     pub line: u32,
     pub column: u32, // in bytes, not chars!!!
@@ -155,7 +202,7 @@ impl Display for KakounePosition {
 //     }
 // }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct KakouneRange {
     pub start: KakounePosition,
     pub end: KakounePosition,
