@@ -44,7 +44,8 @@ impl Lists {
     pub fn write(&self) {
         fs::write(
             &self.path,
-            serde_json::to_string(&self).expect("Could not serialize store"),
+            // TODO: Use a more compact format (and don't pretty print when dev is done)
+            serde_json::to_string_pretty(&self).expect("Could not serialize store"),
         )
         .expect("Could not write to store");
     }
