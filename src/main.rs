@@ -73,20 +73,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn init(app: &App) {
-    // Create or re-create the store file
-    // TODO: Have multiple stores for specific lists to improve performance
-    let local_path = BaseDirs::new().expect("Could not load local directory");
-
-    let local_path = local_path
-        .data_local_dir()
-        .to_str()
-        .expect("Could not convert local data path");
-
-    let mut local_path: PathBuf = [local_path, "kak", "loli"].iter().collect();
-    if !local_path.exists() {
-        fs::create_dir_all(&local_path);
-    }
-    local_path.push("loli-store");
+    let local_path = get_local_path(&app.session_name);
     File::create(&local_path).expect("Could not create store file");
 
     // Print kakscript commands for init
@@ -102,4 +89,23 @@ fn init(app: &App) {
     let lgrep: &str = include_str!("../rc/lgrep.kak");
 
     println!("{}\n{}\n{}", script, lgrep, loli_cmd);
+}
+
+fn get_local_path(session: &str) -> PathBuf {
+    // Create or re-create the store file
+    // TODO: Have multiple stores for specific lists to improve performance
+    let local_path = BaseDirs::new().expect("Could not load local directory");
+
+    let local_path = local_path
+        .data_local_dir()
+        .to_str()
+        .expect("Could not convert local data path");
+
+    let mut local_path: PathBuf = [local_path, "kak", "loli"].iter().collect();
+    if !local_path.exists() {
+        fs::create_dir_all(&local_path);
+    }
+    local_path.push(format!("loli-store-{}", session));
+
+    local_path
 }
