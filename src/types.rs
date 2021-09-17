@@ -19,7 +19,7 @@ pub struct LocationList {
 }
 
 impl LocationList {
-    pub fn new(name: String, input: String) -> Result<Self, LocationListErr> {
+    pub fn from_str_list(name: String, input: String) -> Result<Self, LocationListErr> {
         static LIST_REGEX: OnceCell<Regex> = OnceCell::new();
         let regex = LIST_REGEX
             .get_or_init(|| Regex::new(r"'(.*?)\|(\d+)\.(\d+),(\d+)\.(\d+)\|(.*?)'").unwrap());
@@ -48,7 +48,62 @@ impl LocationList {
             }
         }
 
-        // util::kak_print(&format!("{:#?}", locations));
+        Ok(LocationList { name, locations })
+    }
+
+    pub fn from_grep(name: String, input: String) -> Result<Self, LocationListErr> {
+        static LINE_REGEX: OnceCell<Regex> = OnceCell::new();
+        let regex = LINE_REGEX.get_or_init(|| Regex::new(r"^(.*):(\d+):(\d+):(.*)$").unwrap());
+
+        let mut locations = Vec::new();
+
+        for line in input.lines() {
+            let captures = regex
+                .captures(line)
+                .ok_or(LocationListErr::InvalidGrepFmt)?;
+
+            let filename = captures
+                .get(1)
+                .map(|mtch| mtch.as_str())
+                .ok_or(LocationListErr::InvalidGrepFmt)?;
+
+            let line = captures
+                .get(2)
+                .map(|mtch| {
+                    mtch.as_str()
+                        .parse::<u32>()
+                        .map_err(|_| LocationListErr::InvalidGrepFmt)
+                })
+                .ok_or(LocationListErr::InvalidGrepFmt)??;
+
+            let column = captures
+                .get(3)
+                .map(|mtch| {
+                    mtch.as_str()
+                        .parse::<u32>()
+                        .map_err(|_| LocationListErr::InvalidGrepFmt)
+                })
+                .ok_or(LocationListErr::InvalidGrepFmt)??;
+
+            let preview = captures
+                .get(4)
+                .map(|mtch| mtch.as_str())
+                .ok_or(LocationListErr::InvalidGrepFmt)?;
+
+            locations.push(Location {
+                filename: filename.to_string(),
+                range: KakouneRange {
+                    start: KakounePosition { line, column },
+                    end: KakounePosition {
+                        line,
+                        column: column + 1,
+                    },
+                },
+                // range: KakouneRange::from_parts(line, column, line, column + 1),
+                preview: preview.to_string(),
+            })
+        }
+
         Ok(LocationList { name, locations })
     }
 }
@@ -59,6 +114,8 @@ pub enum LocationListErr {
     InvalidStrList,
     #[error("Invalid range in source list")]
     InvalidRange,
+    #[error("Invalid grep format")]
+    InvalidGrepFmt,
 }
 
 #[derive(Debug)]
@@ -156,7 +213,7 @@ mod tests {
 
     #[test]
     fn test_range() {
-        assert!(LocationList::new(
+        assert!(LocationList::from_str_list(
             "foo".to_string(),
             "'src/main.rs|1.5,1.7|lorem ipsum dolor sit amet' 'src/foo|rs|1.5,1.7|LOREM IPSUM DOLOR SIT AMET'".to_string()
         )
@@ -168,7 +225,7 @@ mod tests {
         }
         let list_str = list.iter().join(" ");
 
-        let list = LocationList::new("foo".to_string(), list_str).unwrap();
+        let list = LocationList::from_str_list("foo".to_string(), list_str).unwrap();
 
         // println!("{:#?}", list);
     }

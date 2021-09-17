@@ -5,6 +5,7 @@ use std::collections::HashSet;
 use std::env;
 use std::error::Error;
 use std::fmt::Display;
+use std::fs;
 use std::path::PathBuf;
 use std::str::FromStr;
 use structopt::StructOpt;
@@ -34,6 +35,9 @@ struct App {
 enum Command {
     /// Prints initialization kakscript
     Init,
+    Grep {
+        filename: PathBuf,
+    },
     /// Creates a new location list
     New {
         list: String,
@@ -45,14 +49,20 @@ enum Command {
 fn main() -> Result<(), Box<dyn Error>> {
     let app = App::from_args();
 
+    let option_name = match app.client_name {
+        Some(ref client_name) => client_name.clone(),
+        None => "LOLIGLOBAL".to_string(),
+    };
+
     match app.cmd {
         Command::Init => init(&app),
+        Command::Grep { filename } => {
+            let input = fs::read_to_string(filename)?;
+            let list = LocationList::from_grep(option_name, input)?;
+            util::kak_print(&format!("{:#?}", list));
+        }
         Command::New { list: input } => {
-            let option_name = match app.client_name {
-                Some(client_name) => client_name,
-                None => "LOLIGLOBAL".to_string(),
-            };
-            let list = LocationList::new(option_name, input)?;
+            let list = LocationList::from_str_list(option_name, input)?;
         }
         _ => (),
     };
@@ -62,7 +72,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 fn init(app: &App) {
     // Inline the contents of the file at compile time
-    let script: &str = include_str!("../rc/loli.kak");
     let cmd = env::current_exe().unwrap();
     let cmd = cmd.to_str().unwrap();
     let loli_cmd = format!(
@@ -71,5 +80,8 @@ fn init(app: &App) {
         app.session_name
     );
 
-    println!("{}\n{}", script, loli_cmd);
+    let script: &str = include_str!("../rc/loli.kak");
+    let lgrep: &str = include_str!("../rc/lgrep.kak");
+
+    println!("{}\n{}\n{}", script, lgrep, loli_cmd);
 }
