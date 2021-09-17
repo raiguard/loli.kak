@@ -80,22 +80,22 @@ impl Display for KakounePosition {
     }
 }
 
-impl FromStr for KakounePosition {
-    type Err = LocationListErr;
+// impl FromStr for KakounePosition {
+//     type Err = LocationListErr;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (line, column) = s.split_once('.').ok_or(LocationListErr::InvalidRange)?;
+//     fn from_str(s: &str) -> Result<Self, Self::Err> {
+//         let (line, column) = s.split_once('.').ok_or(LocationListErr::InvalidRange)?;
 
-        Ok(KakounePosition {
-            line: line
-                .parse::<u32>()
-                .map_err(|_| LocationListErr::InvalidRange)?,
-            column: column
-                .parse::<u32>()
-                .map_err(|_| LocationListErr::InvalidRange)?,
-        })
-    }
-}
+//         Ok(KakounePosition {
+//             line: line
+//                 .parse::<u32>()
+//                 .map_err(|_| LocationListErr::InvalidRange)?,
+//             column: column
+//                 .parse::<u32>()
+//                 .map_err(|_| LocationListErr::InvalidRange)?,
+//         })
+//     }
+// }
 
 #[derive(Debug)]
 pub struct KakouneRange {
@@ -131,18 +131,18 @@ impl KakouneRange {
     }
 }
 
-impl FromStr for KakouneRange {
-    type Err = LocationListErr;
+// impl FromStr for KakouneRange {
+//     type Err = LocationListErr;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (start, end) = s.split_once(',').ok_or(LocationListErr::InvalidRange)?;
+//     fn from_str(s: &str) -> Result<Self, Self::Err> {
+//         let (start, end) = s.split_once(',').ok_or(LocationListErr::InvalidRange)?;
 
-        Ok(KakouneRange {
-            start: KakounePosition::from_str(start)?,
-            end: KakounePosition::from_str(end)?,
-        })
-    }
-}
+//         Ok(KakouneRange {
+//             start: KakounePosition::from_str(start)?,
+//             end: KakounePosition::from_str(end)?,
+//         })
+//     }
+// }
 
 impl Display for KakouneRange {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
