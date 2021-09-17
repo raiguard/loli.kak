@@ -3,6 +3,7 @@
 use itertools::Itertools;
 use std::collections::HashSet;
 use std::env;
+use std::error::Error;
 use std::fmt::Display;
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -31,31 +32,33 @@ struct App {
 
 #[derive(StructOpt)]
 enum Command {
+    /// Prints initialization kakscript
+    Init,
     /// Creates a new location list
     New {
         list: String,
     },
     Next,
     Prev,
-    /// Prints initialization kakscript
-    Init,
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     let app = App::from_args();
 
     match app.cmd {
         Command::Init => init(&app),
-        Command::New { list } => {
-            println!("echo -debug {}", util::editor_escape(&list))
-            // let option_name = match app.client_name {
-            //     Some(client_name) => client_name,
-            //     None => "LLGLOBAL".to_string(),
-            // };
-            // println!("echo -debug '{}'", util::editor_escape(&option_name));
+        Command::New { list: input } => {
+            let option_name = match app.client_name {
+                Some(client_name) => client_name,
+                None => "LOLIGLOBAL".to_string(),
+            };
+            util::kak_print(&option_name);
+            let list = LocationList::new(option_name, input)?;
         }
         _ => (),
-    }
+    };
+
+    Ok(())
 }
 
 fn init(app: &App) {
