@@ -110,35 +110,8 @@ map global location-list-alt C ": lgclose<ret>" -docstring "(global) close list 
 # INTERNALS
 
 decl str loli_cmd
-decl int loli_index
-
-decl str loli_file_key
-decl str loli_global_key "LLGLOBAL"
 
 face global loli_highlight ",,rgb:c678dd+u"
-
-# Remove all non-alphanumeric characters from the filename
-def -hidden -params 1 loli-get-option-key %{
-    eval %sh{
-        sanitized=$(echo $1 | tr -cd '[:alnum:]_')
-        echo "set window loli_file_key $sanitized"
-    }
-}
-
-def -params 3 lgadd %{
-    loli-get-option-key %arg{1}
-    eval %sh{
-        listoptionname=loli_list_${kak_opt_loli_global_key}_${kak_opt_loli_file_key}
-        highlightoptionname=loli_highlight_${kak_opt_loli_global_key}_${kak_opt_loli_file_key}
-        echo "
-            decl range-specs $listoptionname
-            decl range-specs $highlightoptionname
-            set -add global $listoptionname '$2|$3'
-            set -add global $highlightoptionname '$2|loli_highlight'
-            addhl -override window/ ranges $highlightoptionname
-        "
-    }
-}
 
 # For performance reasons, kakoune does not provide all variables to all shell expansions
 # Therefore, we must write the actual commands to $kak_command_fifo so kakoune can see the
