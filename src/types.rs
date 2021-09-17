@@ -53,7 +53,7 @@ impl LocationList {
             };
         }
 
-        util::kak_print(&format!("{:#?}", locations));
+        // util::kak_print(&format!("{:#?}", locations));
         Ok(LocationList { name, locations })
     }
 }
@@ -171,12 +171,14 @@ mod tests {
         )
         .is_ok());
 
-        let list = LocationList::new(
-            "foo".to_string(),
-            "'colors/one-darker.kak|11.1,11.4|decl -hidden str fg \"abb2bf\"' 'rc/test.kak|35.13,35.17|face global value \"rgb:%%opt{darkorange}\"'".to_string()
-        )
-        .unwrap();
+        let mut list = Vec::new();
+        for _ in 1..1000 {
+            list.push("'colors/one-darker.kak|11.1,11.4|decl -hidden str fg \"abb2bf\"'")
+        }
+        let list_str = list.iter().join(" ");
 
-        println!("{:#?}", list);
+        let list = LocationList::new("foo".to_string(), list_str).unwrap();
+
+        // println!("{:#?}", list);
     }
 }
