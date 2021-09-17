@@ -17,3 +17,8 @@ def -hidden -params 1 lcnew %{
         echo "eval %sh{ \$kak_opt_loli_cmd -c $kak_client new \"\$kak_quoted_opt_$1\" }" > $kak_command_fifo
     }
 }
+
+# Delete store file when the session ends
+hook global KakEnd .* %{
+    nop %sh{ $kak_opt_loli_cmd clean }
+}

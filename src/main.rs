@@ -37,6 +37,8 @@ struct App {
 enum Command {
     /// Prints initialization kakscript
     Init,
+    /// Cleans up (deletes) the store file for the given session
+    Clean,
     Grep {
         filename: PathBuf,
     },
@@ -58,6 +60,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     match app.cmd {
         Command::Init => init(&app),
+        Command::Clean => {
+            fs::remove_file(get_local_path(&app.session_name))
+                .expect("Could not delete store file");
+        }
         Command::Grep { filename } => {
             let mut lists = Lists::from_file(&get_local_path(&app.session_name))?;
             let input = fs::read_to_string(filename)?;
