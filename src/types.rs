@@ -88,7 +88,8 @@ impl LocationList {
             let preview = captures
                 .get(4)
                 .map(|mtch| mtch.as_str())
-                .ok_or(LocationListErr::InvalidGrepFmt)?;
+                .ok_or(LocationListErr::InvalidGrepFmt)?
+                .trim();
 
             locations.push(Location {
                 filename: filename.to_string(),

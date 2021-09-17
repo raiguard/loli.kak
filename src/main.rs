@@ -1,11 +1,13 @@
 #![allow(dead_code, unused)]
 
+use directories::BaseDirs;
 use itertools::Itertools;
 use std::collections::HashSet;
 use std::env;
 use std::error::Error;
 use std::fmt::Display;
 use std::fs;
+use std::fs::File;
 use std::path::PathBuf;
 use std::str::FromStr;
 use structopt::StructOpt;
@@ -71,7 +73,23 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn init(app: &App) {
-    // Inline the contents of the file at compile time
+    // Create or re-create the store file
+    // TODO: Have multiple stores for specific lists to improve performance
+    let local_path = BaseDirs::new().expect("Could not load local directory");
+
+    let local_path = local_path
+        .data_local_dir()
+        .to_str()
+        .expect("Could not convert local data path");
+
+    let mut local_path: PathBuf = [local_path, "kak", "loli"].iter().collect();
+    if !local_path.exists() {
+        fs::create_dir_all(&local_path);
+    }
+    local_path.push("loli-store");
+    File::create(&local_path).expect("Could not create store file");
+
+    // Print kakscript commands for init
     let cmd = env::current_exe().unwrap();
     let cmd = cmd.to_str().unwrap();
     let loli_cmd = format!(
