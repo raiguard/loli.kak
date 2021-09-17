@@ -23,9 +23,11 @@ use types::*;
     about = "An implementation of location lists for kakoune."
 )]
 struct App {
+    /// (Optional) The client list to create. If omitted, a global list will be created
     #[structopt(short, long)]
     client_name: Option<String>,
 
+    /// The session that this list is being created for
     #[structopt(short, long)]
     session_name: String,
 
@@ -39,15 +41,10 @@ enum Command {
     Init,
     /// Cleans up (deletes) the store file for the given session
     Clean,
-    Grep {
-        filename: PathBuf,
-    },
-    /// Creates a new location list
-    New {
-        list: String,
-    },
-    Next,
-    Prev,
+    /// Creates a new location list based on grep output
+    Grep { filename: PathBuf },
+    /// Creates a new location list from a str-list kakoune setting
+    New { list: String },
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -100,8 +97,9 @@ fn init(app: &App) {
 
     let script: &str = include_str!("../rc/loli.kak");
     let lgrep: &str = include_str!("../rc/lgrep.kak");
+    let test: &str = include_str!("../rc/test.kak");
 
-    println!("{}\n{}\n{}", script, lgrep, loli_cmd);
+    println!("{}\n{}\n{}\n{}", script, lgrep, test, loli_cmd);
 }
 
 fn get_local_path(session: &str) -> PathBuf {
