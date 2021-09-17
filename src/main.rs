@@ -60,7 +60,7 @@ fn main() {
 
 fn init(app: &App) {
     // Inline the contents of the file at compile time
-    let script: &str = include_str!("../rc/location-list.kak");
+    let script: &str = include_str!("../rc/loli.kak");
     let cmd = env::current_exe().unwrap();
     let cmd = cmd.to_str().unwrap();
     let loli_cmd = format!(
