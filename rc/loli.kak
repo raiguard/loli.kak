@@ -140,25 +140,18 @@ def -params 3 lgadd %{
     }
 }
 
-# I don't know why. I don't want to know why. I shouldn't have to wonder why.
-# But for whatever reason, if I remove the comments in the two following commands, ${!listname} stops working
+# For performance reasons, kakoune does not provide all variables to all shell expansions
+# Therefore, we must write the actual commands to $kak_command_fifo so kakoune can see the
+# variable names directly, instead of using indirection
 
 def -hidden -params 1 lgnew %{
-    eval %sh{
-        listname=kak_quoted_opt_$1
-        list=${!listname}
-        # echo "echo -debug '$kak_quoted_opt_loli_test_list'"
-        # echo "echo -debug '$listname $list'"
-        $kak_opt_loli_cmd new "$list"
+    nop %sh{
+        echo "eval %sh{ \$kak_opt_loli_cmd new \"\$kak_quoted_opt_$1\" }" > $kak_command_fifo
     }
 }
 
 def -hidden -params 1 lcnew %{
-    eval %sh{
-        listname=kak_quoted_opt_$1
-        list=${!listname}
-        # echo "echo -debug '$kak_quoted_opt_loli_test_list'"
-        # echo "echo -debug '$listname $list'"
-        $kak_opt_loli_cmd -c "$kak_client" new "$list"
+    nop %sh{
+        echo "eval %sh{ \$kak_opt_loli_cmd -c $kak_client new \"\$kak_quoted_opt_$1\" }" > $kak_command_fifo
     }
 }

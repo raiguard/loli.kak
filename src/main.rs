@@ -47,7 +47,7 @@ fn main() {
     match app.cmd {
         Command::Init => init(&app),
         Command::New { list } => {
-            println!("echo -debug '{}'", util::editor_escape(&list))
+            println!("echo -debug {}", util::editor_escape(&list))
             // let option_name = match app.client_name {
             //     Some(client_name) => client_name,
             //     None => "LLGLOBAL".to_string(),
