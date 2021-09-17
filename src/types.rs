@@ -21,36 +21,31 @@ pub struct LocationList {
 impl LocationList {
     pub fn new(name: String, input: String) -> Result<Self, LocationListErr> {
         static LIST_REGEX: OnceCell<Regex> = OnceCell::new();
-        let regex = LIST_REGEX.get_or_init(|| {
-            Regex::new(r"'(?P<filename>.*?)\|(?P<start_line>\d+)\.(?P<start_column>\d+),(?P<end_line>\d+)\.(?P<end_column>\d+)\|(?P<preview>.*?)'").unwrap()
-        });
+        let regex = LIST_REGEX
+            .get_or_init(|| Regex::new(r"'(.*?)\|(\d+)\.(\d+),(\d+)\.(\d+)\|(.*?)'").unwrap());
 
         let mut locations = Vec::new();
 
         for captures in regex.captures_iter(&input) {
-            match (
-                captures.name("filename"),
-                [
-                    (captures.name("start_line"), captures.name("start_column")),
-                    (captures.name("end_line"), captures.name("end_column")),
-                ],
-                captures.name("preview"),
-            ) {
-                (
-                    Some(filename),
-                    [(Some(start_line), Some(start_column)), (Some(end_line), Some(end_column))],
-                    Some(preview),
-                ) => {
-                    let range =
-                        KakouneRange::from_matches(start_line, start_column, end_line, end_column)?;
-                    locations.push(Location {
-                        filename: filename.as_str().to_string(),
-                        range,
-                        preview: preview.as_str().to_string(),
-                    })
-                }
-                _ => return Err(LocationListErr::InvalidStrList),
-            };
+            let captures: Vec<&str> = captures
+                .iter()
+                .skip(1)
+                .map(|capture| capture.unwrap().as_str())
+                .collect();
+
+            if let [filename, start_line, start_column, end_line, end_column, preview] =
+                captures[..]
+            {
+                let range =
+                    KakouneRange::from_parts(start_line, start_column, end_line, end_column)?;
+                locations.push(Location {
+                    filename: filename.to_string(),
+                    range,
+                    preview: preview.to_string(),
+                });
+            } else {
+                return Err(LocationListErr::InvalidStrList);
+            }
         }
 
         // util::kak_print(&format!("{:#?}", locations));
@@ -109,30 +104,26 @@ pub struct KakouneRange {
 }
 
 impl KakouneRange {
-    pub fn from_matches(
-        start_line: Match,
-        start_column: Match,
-        end_line: Match,
-        end_column: Match,
+    pub fn from_parts(
+        start_line: &str,
+        start_column: &str,
+        end_line: &str,
+        end_column: &str,
     ) -> Result<Self, LocationListErr> {
         Ok(KakouneRange {
             start: KakounePosition {
                 line: start_line
-                    .as_str()
                     .parse::<u32>()
                     .map_err(|_| LocationListErr::InvalidRange)?,
                 column: start_column
-                    .as_str()
                     .parse::<u32>()
                     .map_err(|_| LocationListErr::InvalidRange)?,
             },
             end: KakounePosition {
                 line: end_line
-                    .as_str()
                     .parse::<u32>()
                     .map_err(|_| LocationListErr::InvalidRange)?,
                 column: end_column
-                    .as_str()
                     .parse::<u32>()
                     .map_err(|_| LocationListErr::InvalidRange)?,
             },
