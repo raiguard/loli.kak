@@ -154,13 +154,12 @@ impl LocationList {
     }
 
     // For now, just generate highlighter ranges so we can see it in action
-    pub fn gen_ranges(&self, timestamp: u32) {
+    // Returns a list of associated files
+    pub fn gen_ranges(&self, timestamp: u32) -> Vec<String> {
         let mut options = HashMap::new();
 
         for location in &self.locations {
-            let filename = location
-                .filename
-                .replace(|c: char| !c.is_alphanumeric(), "");
+            let filename = util::strip_an(&location.filename);
 
             let mut entries = options.entry(filename).or_insert(Vec::new());
 
@@ -185,6 +184,8 @@ impl LocationList {
                 })
                 .join("\n")
         );
+
+        options.keys().map(|key| key.to_string()).collect()
     }
 }
 
@@ -200,7 +201,7 @@ pub enum LocationListErr {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Location {
-    filename: String,
+    pub filename: String,
     range: KakouneRange,
     preview: String,
 }
@@ -294,7 +295,7 @@ mod tests {
     #[test]
     fn test_range() {
         assert!(LocationList::from_str_list(
-            "foo".to_string(),
+            "foo",
             "'src/main.rs|1.5,1.7|lorem ipsum dolor sit amet' 'src/foo|rs|1.5,1.7|LOREM IPSUM DOLOR SIT AMET'".to_string()
         )
         .is_ok());
@@ -305,7 +306,7 @@ mod tests {
         }
         let list_str = list.iter().join(" ");
 
-        let list = LocationList::from_str_list("foo".to_string(), list_str).unwrap();
+        let list = LocationList::from_str_list("foo", list_str).unwrap();
 
         // println!("{:#?}", list);
     }

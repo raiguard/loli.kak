@@ -41,6 +41,11 @@ enum Command {
     Init,
     /// Cleans up (deletes) the store file for the given session
     Clean,
+    /// Prints highlighters for the current buffer, if any
+    Highlight {
+        /// The buffer name
+        bufname: String,
+    },
     /// Creates a new location list based on grep output
     Grep {
         /// The current kakoune timestamp
@@ -48,6 +53,9 @@ enum Command {
         timestamp: u32,
         /// The file containing the grep output. Grep output must include column numbers
         filename: PathBuf,
+        /// All of the currently open buffers
+        #[structopt(short, long)]
+        buffers: Vec<String>,
     },
     /// Creates a new location list from a str-list kakoune setting
     New {
@@ -62,7 +70,7 @@ enum Command {
 fn main() -> Result<(), Box<dyn Error>> {
     let app = App::from_args();
 
-    let option_name = match app.client_name {
+    let list_key = match app.client_name {
         Some(ref client_name) => client_name.clone(),
         None => "LOLIGLOBAL".to_string(),
     };
@@ -73,26 +81,45 @@ fn main() -> Result<(), Box<dyn Error>> {
             fs::remove_file(get_local_path(&app.session_name))
                 .expect("Could not delete store file");
         }
+        Command::Highlight { bufname } => {
+            let mut lists = Lists::from_file(&get_local_path(&app.session_name))?;
+            if let Some(loli) = lists.lists.get(&list_key) {
+                if loli
+                    .locations
+                    .iter()
+                    .map(|location| &location.filename)
+                    .contains(&bufname)
+                {
+                    println!(
+                        "add-highlighter buffer/ ranges loli_{}_{}_highlight",
+                        list_key,
+                        util::strip_an(&bufname)
+                    )
+                };
+            }
+        }
         Command::Grep {
+            buffers,
             filename,
             timestamp,
         } => {
             let mut lists = Lists::from_file(&get_local_path(&app.session_name))?;
             let input = fs::read_to_string(filename)?;
-            let list = LocationList::from_grep(&option_name, input)?;
-            list.gen_ranges(timestamp);
-            lists.lists.insert(option_name, list);
+            let list = LocationList::from_grep(&list_key, input)?;
+            let files = list.gen_ranges(timestamp);
+            highlight_open_buffers(&files, &buffers, &list_key);
+            lists.lists.insert(list_key, list);
             lists.write();
         }
-        Command::New {
-            list: input,
-            timestamp,
-        } => {
-            let mut lists = Lists::from_file(&get_local_path(&app.session_name))?;
-            let list = LocationList::from_str_list(&option_name, input)?;
-            lists.lists.insert(option_name, list);
-            lists.write();
-        }
+        // Command::New {
+        //     list: input,
+        //     timestamp,
+        // } => {
+        //     let mut lists = Lists::from_file(&get_local_path(&app.session_name))?;
+        //     let list = LocationList::from_str_list(&option_name, input)?;
+        //     lists.lists.insert(option_name, list);
+        //     lists.write();
+        // }
         _ => (),
     };
 
@@ -138,4 +165,22 @@ fn get_local_path(session: &str) -> PathBuf {
     local_path.push(format!("loli-store-{}", session));
 
     local_path
+}
+
+fn highlight_open_buffers(files: &Vec<String>, buffers: &Vec<String>, list_key: &str) {
+    for (filename, stripped) in buffers
+        .iter()
+        .map(|bufname| (bufname, util::strip_an(&bufname)))
+        .filter(|(_, stripped)| files.contains(stripped))
+    {
+        println!(
+            "eval -save-regs a %{{
+                exec '\"aZ'
+                edit {}
+                add-highlighter -override buffer/ ranges loli_{}_{}_highlight
+                exec '\"az'
+            }}",
+            filename, list_key, stripped
+        )
+    }
 }
