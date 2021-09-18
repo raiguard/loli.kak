@@ -18,17 +18,17 @@ def -hidden -params 1 lcnew %{
     }
 }
 
-hook global BufCreate .* %{
-    eval %sh{
-        $kak_opt_loli_cmd highlight $kak_bufname
-    }
-}
-
-# hook global BufClose .* %{
-#     exec %sh{
-#         $kak_opt_loli_cmd rmhighlight -t $kak_timestamp $kak_bufname
+# hook global BufCreate .* %{
+#     eval %sh{
+#         $kak_opt_loli_cmd highlight $kak_bufname
 #     }
 # }
+
+hook global WinDisplay .* %{
+    eval %sh{
+        $kak_opt_loli_cmd highlight $kak_bufname $kak_client
+    }
+}
 
 # Delete store file when the session ends
 hook global KakEnd .* %{

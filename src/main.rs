@@ -45,6 +45,9 @@ enum Command {
     Highlight {
         /// The buffer name
         bufname: String,
+        /// The cilent name
+        // TODO: This is redundant!
+        client: String,
     },
     /// Creates a new location list based on grep output
     Grep {
@@ -56,6 +59,9 @@ enum Command {
         /// All of the currently open buffers
         #[structopt(short, long)]
         buffers: Vec<String>,
+        /// The current buffer name
+        #[structopt(long)]
+        this_buffer: String,
     },
     /// Creates a new location list from a str-list kakoune setting
     New {
@@ -81,9 +87,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             fs::remove_file(get_local_path(&app.session_name))
                 .expect("Could not delete store file");
         }
-        Command::Highlight { bufname } => {
+        Command::Highlight { bufname, client } => {
             let mut lists = Lists::from_file(&get_local_path(&app.session_name))?;
-            if let Some(loli) = lists.lists.get(&list_key) {
+
+            // Highlight global list on the buffer level
+            if let Some(loli) = lists.lists.get("LOLIGLOBAL") {
                 if loli
                     .locations
                     .iter()
@@ -91,8 +99,24 @@ fn main() -> Result<(), Box<dyn Error>> {
                     .contains(&bufname)
                 {
                     println!(
-                        "add-highlighter buffer/ ranges loli_{}_{}_highlight",
+                        "add-highlighter -override buffer/ ranges loli_{}_{}_highlight",
                         list_key,
+                        util::strip_an(&bufname)
+                    )
+                };
+            }
+
+            // Highlight client list on the window level
+            if let Some(loli) = lists.lists.get(&client) {
+                if loli
+                    .locations
+                    .iter()
+                    .map(|location| &location.filename)
+                    .contains(&bufname)
+                {
+                    println!(
+                        "add-highlighter -override window/ ranges loli_{}_{}_highlight",
+                        client,
                         util::strip_an(&bufname)
                     )
                 };
@@ -101,25 +125,25 @@ fn main() -> Result<(), Box<dyn Error>> {
         Command::Grep {
             buffers,
             filename,
+            this_buffer,
             timestamp,
         } => {
             let mut lists = Lists::from_file(&get_local_path(&app.session_name))?;
             let input = fs::read_to_string(filename)?;
             let list = LocationList::from_grep(&list_key, input)?;
             let files = list.gen_ranges(timestamp);
-            highlight_open_buffers(&files, &buffers, &list_key);
+            if list_key == "LOLIGLOBAL" {
+                global_highlight_open_buffers(&files, &buffers, &list_key);
+            } else {
+                println!(
+                    "add-highlighter -override window/ ranges loli_{}_{}_highlight",
+                    list_key,
+                    util::strip_an(&this_buffer)
+                )
+            }
             lists.lists.insert(list_key, list);
             lists.write();
         }
-        // Command::New {
-        //     list: input,
-        //     timestamp,
-        // } => {
-        //     let mut lists = Lists::from_file(&get_local_path(&app.session_name))?;
-        //     let list = LocationList::from_str_list(&option_name, input)?;
-        //     lists.lists.insert(option_name, list);
-        //     lists.write();
-        // }
         _ => (),
     };
 
@@ -167,7 +191,7 @@ fn get_local_path(session: &str) -> PathBuf {
     local_path
 }
 
-fn highlight_open_buffers(files: &Vec<String>, buffers: &Vec<String>, list_key: &str) {
+fn global_highlight_open_buffers(files: &Vec<String>, buffers: &Vec<String>, list_key: &str) {
     for (filename, stripped) in buffers
         .iter()
         .map(|bufname| (bufname, util::strip_an(&bufname)))
