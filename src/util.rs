@@ -30,6 +30,8 @@ pub fn get_store_path(session: &str) -> PathBuf {
     local_path
 }
 
+pub const DEFAULT_NAME: &str = "LOLIGLOBAL";
+
 // /// Adds highlight and indices highlighters for the given option
 // pub fn add_highlighters(key: &str, buffer: &str, is_client: bool) {
 //     println!(

@@ -10,6 +10,7 @@ pub struct Context {
     output_fifo_str: String,
     session: String,
     pub store: PathBuf,
+    pub list_key: String,
 }
 
 impl Context {
@@ -17,6 +18,7 @@ impl Context {
         input_fifo: Option<PathBuf>,
         output_fifo: Option<PathBuf>,
         session: String,
+        client: Option<String>,
     ) -> Result<Self, Box<dyn Error>> {
         match (input_fifo, output_fifo) {
             (Some(input_fifo), Some(output_fifo)) => Ok(Self {
@@ -26,8 +28,12 @@ impl Context {
                     .ok_or("Invalid output FIFO path")?
                     .to_string(),
                 output_fifo,
-                session,
                 store: util::get_store_path(&session),
+                list_key: match client {
+                    Some(client) => client,
+                    None => util::DEFAULT_NAME.to_string(),
+                },
+                session,
             }),
             _ => Err("Missing one or both FIFOs".into()),
         }

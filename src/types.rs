@@ -34,7 +34,7 @@ impl Lists {
     }
 
     pub fn from_file(ctx: &Context) -> Result<Self, Box<dyn Error>> {
-        let file = fs::read_to_string(ctx.store).expect("Could not read store file");
+        let file = fs::read_to_string(&ctx.store).expect("Could not read store file");
         let lists: Lists = serde_json::from_str(&file).expect("Could not deserialize store");
         Ok(lists)
     }

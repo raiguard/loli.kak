@@ -48,8 +48,6 @@ enum Command {
     Grep { output_path: PathBuf },
 }
 
-const DEFAULT_NAME: &str = "LOLIGLOBAL";
-
 fn main() -> Result<(), Box<dyn Error>> {
     let app = App::from_args();
 
@@ -59,13 +57,14 @@ fn main() -> Result<(), Box<dyn Error>> {
             fs::remove_file(&util::get_store_path(&app.session_name))?;
         }
         Command::Grep { ref output_path } => {
-            let ctx = Context::new(app.input_fifo, app.output_fifo, app.session_name)?;
+            let ctx = Context::new(
+                app.input_fifo,
+                app.output_fifo,
+                app.session_name,
+                app.client_name,
+            )?;
 
-            let list_key = match app.client_name {
-                Some(ref client_name) => client_name,
-                None => DEFAULT_NAME,
-            };
-            let list = LocationList::from_grep(list_key, fs::read_to_string(output_path)?)?;
+            let list = LocationList::from_grep(&ctx.list_key, fs::read_to_string(output_path)?)?;
 
             let mut lists = Lists::from_file(&ctx)?;
 
