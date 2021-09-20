@@ -182,12 +182,12 @@ impl LocationList {
         for (i, location) in self.locations.iter().enumerate() {
             let filename = util::strip_an(&location.filename);
 
-            let mut highlights = options
+            let highlights = options
                 .entry(filename.clone() + "_highlight")
                 .or_insert_with(Vec::new);
             highlights.push(format!("{}|{}", location.range, "loli_highlight"));
 
-            let mut indices = options
+            let indices = options
                 .entry(filename.clone() + "_indices")
                 .or_insert_with(Vec::new);
             indices.push(format!("{}|{}", location.range, i));
@@ -337,6 +337,7 @@ impl Display for KakouneRange {
 }
 
 #[cfg(test)]
+#[allow(unused)]
 mod tests {
     use super::*;
 

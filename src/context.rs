@@ -8,7 +8,7 @@ pub struct Context {
     input_fifo: PathBuf,
     output_fifo: PathBuf,
     output_fifo_str: String,
-    session: String,
+    // session: String,
     pub store: PathBuf,
     pub list_key: String,
 }
@@ -33,7 +33,7 @@ impl Context {
                     Some(client) => client,
                     None => util::DEFAULT_NAME.to_string(),
                 },
-                session,
+                // session,
             }),
             _ => Err("Missing one or both FIFOs".into()),
         }
