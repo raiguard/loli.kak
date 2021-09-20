@@ -4,7 +4,19 @@ use std::path::PathBuf;
 
 use crate::util;
 
+/// Prints to the kakoune debug log, using the same syntax as `println!`.
+#[allow(unused)]
+macro_rules! kak_print {
+    ($literal:expr) => {
+        println!("echo -debug '{}'", $literal)
+    };
+    ($template:expr, $($arg:tt)*) => ({
+        println!("echo -debug '{}'", $crate::util::editor_escape(&format!($template, $($arg)*)));
+    })
+}
+
 pub struct Context {
+    pub client: Option<String>,
     input_fifo: PathBuf,
     output_fifo: PathBuf,
     output_fifo_str: String,
@@ -30,9 +42,10 @@ impl Context {
                 output_fifo,
                 store: util::get_store_path(&session),
                 list_key: match client {
-                    Some(client) => client,
+                    Some(ref client) => client.to_string(),
                     None => util::DEFAULT_NAME.to_string(),
                 },
+                client,
                 // session,
             }),
             _ => Err("Missing one or both FIFOs".into()),
@@ -46,15 +59,22 @@ impl Context {
 
         Ok(())
     }
-}
 
-/// Prints to the kakoune debug log, using the same syntax as `println!`.
-#[allow(unused)]
-macro_rules! kak_print {
-    ($literal:expr) => {
-        println!("echo -debug '{}'", $literal)
-    };
-    ($template:expr, $($arg:tt)*) => ({
-        println!("echo -debug '{}'", $crate::util::editor_escape(&format!($template, $($arg)*)));
-    })
+    pub fn add_highlighters(
+        &self,
+        key: &str,
+        buffer: &str,
+        is_global: bool,
+    ) -> Result<(), Box<dyn Error>> {
+        let command = format!(
+            "add-highlighter -override {}/ ranges loli_{}_{}_highlight",
+            if is_global { "buffer" } else { "window" },
+            key,
+            util::strip_an(&buffer)
+        );
+
+        // kak_print!(&command);
+
+        self.exec(command)
+    }
 }

@@ -57,6 +57,37 @@ impl Lists {
         Ok(())
     }
 
+    pub fn highlight(&mut self, buffer: String, ctx: &Context) -> Result<(), Box<dyn Error>> {
+        // Highlight the global list on the buffer level
+        if let Some(list) = self.lists.get_mut(util::DEFAULT_NAME) {
+            if list
+                .locations
+                .iter()
+                .map(|location| &location.filename)
+                .contains(&buffer)
+            {
+                ctx.add_highlighters(&list.name, &buffer, true)?;
+                list.active_buffers.push(buffer.clone());
+            };
+        };
+
+        // Highlight the client list on the window level
+        // PANIC: We can unwrap here because this command is always called with a client
+        if let Some(list) = self.lists.get_mut(ctx.client.as_ref().unwrap()) {
+            if list
+                .locations
+                .iter()
+                .map(|location| &location.filename)
+                .contains(&buffer)
+            {
+                ctx.add_highlighters(&list.name, &buffer, false)?;
+                list.active_buffers.push(buffer);
+            };
+        };
+
+        Ok(())
+    }
+
     pub fn write(&self) {
         fs::write(
             &self.path,

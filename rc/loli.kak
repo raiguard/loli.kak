@@ -4,12 +4,12 @@ face global loli_highlight "default+r"
 
 # HOOKS
 
-# # Highlight newly opened buffers
-# hook global WinDisplay .* %{
-#     evaluate-commands %sh{
-#         $kak_opt_loli_cmd highlight $kak_bufname $kak_client
-#     }
-# }
+# Highlight newly opened buffers
+hook global WinDisplay .* %{
+    evaluate-commands %sh{
+        $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo -c $kak_client highlight $kak_bufname
+    }
+}
 
 # Delete store file when the session ends
 hook global KakEnd .* %{

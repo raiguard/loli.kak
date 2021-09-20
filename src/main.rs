@@ -52,6 +52,9 @@ enum Command {
 
     /// Parse a str-list into a location list
     List { input: String },
+
+    /// Highlight the given buffer's location lists
+    Highlight { buffer: String },
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -102,6 +105,19 @@ fn main() -> Result<(), Box<dyn Error>> {
             let mut lists = Lists::from_file(&ctx)?;
 
             lists.insert(list, &ctx)?;
+            lists.write();
+        }
+        Command::Highlight { buffer } => {
+            let ctx = Context::new(
+                app.input_fifo,
+                app.output_fifo,
+                app.session_name,
+                app.client_name,
+            )?;
+
+            let mut lists = Lists::from_file(&ctx)?;
+
+            lists.highlight(buffer, &ctx);
             lists.write();
         }
     }
