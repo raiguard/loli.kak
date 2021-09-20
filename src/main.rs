@@ -32,6 +32,9 @@ struct App {
     #[structopt(short, long)]
     output_fifo: Option<PathBuf>,
 
+    #[structopt(short, long)]
+    timestamp: Option<usize>,
+
     #[structopt(subcommand)]
     cmd: Command,
 }
@@ -71,6 +74,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 app.output_fifo,
                 app.session_name,
                 app.client_name,
+                app.timestamp,
             )?;
 
             let mut lists = Lists::from_file(&ctx)?;
@@ -83,6 +87,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 app.output_fifo,
                 app.session_name,
                 app.client_name,
+                app.timestamp,
             )?;
 
             let list = LocationList::from_grep(&ctx.list_key, fs::read_to_string(output_path)?)?;
@@ -98,6 +103,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 app.output_fifo,
                 app.session_name,
                 app.client_name,
+                app.timestamp,
             )?;
 
             let list = LocationList::from_str_list(&ctx.list_key, input)?;
@@ -113,11 +119,12 @@ fn main() -> Result<(), Box<dyn Error>> {
                 app.output_fifo,
                 app.session_name,
                 app.client_name,
+                app.timestamp,
             )?;
 
             let mut lists = Lists::from_file(&ctx)?;
 
-            lists.highlight(buffer, &ctx);
+            lists.highlight(buffer, &ctx)?;
             lists.write();
         }
     }

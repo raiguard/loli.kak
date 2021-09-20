@@ -7,7 +7,7 @@ face global loli_highlight "default+r"
 # Highlight newly opened buffers
 hook global WinDisplay .* %{
     evaluate-commands %sh{
-        $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo -c $kak_client highlight $kak_bufname
+        $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo -t $kak_timestamp -c $kak_client highlight $kak_bufname
     }
 }
 
@@ -20,13 +20,13 @@ hook global KakEnd .* %{
 
 define-command gclear %{
     evaluate-commands %sh{
-        $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo clear
+        $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo -t $kak_timestamp clear
     }
 }
 
 define-command cclear %{
     evaluate-commands %sh{
-        $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo -c $kak_client clear
+        $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo -t $kak_timestamp -c $kak_client clear
     }
 }
 
@@ -41,7 +41,7 @@ define-command -params .. -file-completion ggrep %{
         output=$(mktemp -d "${TMPDIR:-/tmp}"/kak-grep.XXXXXXXX)/fifo
         rg --vimgrep --trim  "$@" | tr -d '\r' > ${output} 2>&1
 
-        $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo grep "${output}"
+        $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo -t $kak_timestamp grep "${output}"
     }
 }
 
@@ -54,7 +54,7 @@ define-command -params .. -file-completion cgrep %{
         output=$(mktemp -d "${TMPDIR:-/tmp}"/kak-grep.XXXXXXXX)/fifo
         rg --vimgrep --trim  "$@" | tr -d '\r' > ${output} 2>&1
 
-        $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo -c $kak_client grep "${output}"
+        $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo -t $kak_timestamp -c $kak_client grep "${output}"
     }
 }
 
@@ -63,7 +63,7 @@ define-command -params .. -file-completion cgrep %{
 define-command -params 1 gnew %{
     evaluate-commands %sh{
         echo "evaluate-commands %sh{
-            \$kak_opt_loli_cmd -i \$kak_command_fifo -o \$kak_response_fifo list \"\$kak_quoted_opt_$1\"
+            \$kak_opt_loli_cmd -i \$kak_command_fifo -o \$kak_response_fifo -t \$kak_timestamp list \"\$kak_quoted_opt_$1\"
         }" >> $kak_command_fifo
     }
 }
@@ -71,7 +71,7 @@ define-command -params 1 gnew %{
 define-command -params 1 cnew %{
     evaluate-commands %sh{
         echo "evaluate-commands %sh{
-            $kak_opt_loli_cmd -i \$kak_command_fifo -o \$kak_response_fifo -c $kak_client list \"\$kak_quoted_opt_$1\"
+            $kak_opt_loli_cmd -i \$kak_command_fifo -o \$kak_response_fifo -t \$kak_timestamp -c $kak_client list \"\$kak_quoted_opt_$1\"
         }" >> $kak_command_fifo
     }
 }
@@ -80,6 +80,6 @@ define-command -params 1 cnew %{
 
 define-command gtest %{
     evaluate-commands %sh{
-        $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo test
+        $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo -t $kak_timestamp test
     }
 }

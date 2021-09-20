@@ -23,6 +23,7 @@ pub struct Context {
     // session: String,
     pub store: PathBuf,
     pub list_key: String,
+    pub timestamp: Option<usize>,
 }
 
 impl Context {
@@ -31,6 +32,7 @@ impl Context {
         output_fifo: Option<PathBuf>,
         session: String,
         client: Option<String>,
+        timestamp: Option<usize>,
     ) -> Result<Self, Box<dyn Error>> {
         match (input_fifo, output_fifo) {
             (Some(input_fifo), Some(output_fifo)) => Ok(Self {
@@ -46,6 +48,7 @@ impl Context {
                     None => util::DEFAULT_NAME.to_string(),
                 },
                 client,
+                timestamp,
                 // session,
             }),
             _ => Err("Missing one or both FIFOs".into()),
@@ -73,8 +76,11 @@ impl Context {
             util::strip_an(&buffer)
         );
 
-        // kak_print!(&command);
+        kak_print!(&command);
 
-        self.exec(command)
+        println!("{}", command);
+
+        Ok(())
+        // self.exec(command)
     }
 }

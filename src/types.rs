@@ -39,9 +39,11 @@ impl Lists {
         Ok(lists)
     }
 
-    pub fn insert(&mut self, list: LocationList, ctx: &Context) -> Result<(), Box<dyn Error>> {
+    pub fn insert(&mut self, mut list: LocationList, ctx: &Context) -> Result<(), Box<dyn Error>> {
         // Clear data for previous entry, if there is one
         self.clear(&ctx)?;
+
+        list.gen_ranges(&ctx)?;
 
         self.lists.insert(list.name.clone(), list);
 
@@ -104,6 +106,7 @@ pub struct LocationList {
     pub index: u32,
     pub locations: Vec<Location>,
     pub name: String,
+    pub options: Vec<String>,
 }
 
 impl LocationList {
@@ -141,6 +144,7 @@ impl LocationList {
             name: name.to_string(),
             locations,
             index: 0,
+            options: vec![],
         })
     }
 
@@ -198,16 +202,17 @@ impl LocationList {
         }
 
         Ok(LocationList {
-            name: name.to_string(),
-            locations,
-            index: 0,
             active_buffers: vec![],
+            index: 0,
+            locations,
+            name: name.to_string(),
+            options: vec![],
         })
     }
 
     // For now, just generate highlighter ranges so we can see it in action
     // Returns a list of associated files
-    pub fn gen_ranges(&self, timestamp: u32) -> Vec<String> {
+    pub fn gen_ranges(&mut self, ctx: &Context) -> Result<(), Box<dyn Error>> {
         let mut options = HashMap::new();
 
         for (i, location) in self.locations.iter().enumerate() {
@@ -224,8 +229,7 @@ impl LocationList {
             indices.push(format!("{}|{}", location.range, i));
         }
 
-        println!(
-            "{}",
+        ctx.exec(
             options
                 .iter()
                 .map(|(name, members)| {
@@ -234,14 +238,17 @@ impl LocationList {
                         set global loli_{0}_{1} {2} '{3}'",
                         self.name,
                         name,
-                        timestamp,
+                        // PANIC: We can unwrap this, because we guarantee that timestamp will exist when this function is called
+                        ctx.timestamp.unwrap(),
                         members.iter().join("' '")
                     )
                 })
-                .join("\n")
-        );
+                .join("\n"),
+        )?;
 
-        options.keys().map(|key| key.to_string()).collect()
+        self.options = options.keys().cloned().collect();
+
+        Ok(())
     }
 
     /// Removes all current highlighters for this list
