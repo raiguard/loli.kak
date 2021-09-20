@@ -26,21 +26,22 @@ impl Context {
         }
     }
 
-    pub fn exec(&self, commands: String) -> Result<String, Box<dyn Error>> {
-        fs::write(
-            &self.input_fifo,
-            format!("echo -to-file {} \"{}\"", self.output_fifo_str, commands),
-        )?;
-        let output = fs::read_to_string(&self.output_fifo)?;
-        Ok(output)
-    }
-
-    pub fn exec_silent(&self, commands: String) -> Result<(), Box<dyn Error>> {
-        fs::write(
-            &self.input_fifo,
-            format!("echo -to-file {} \"{}\"", self.output_fifo_str, commands),
-        )?;
+    pub fn exec(&self, commands: String) -> Result<(), Box<dyn Error>> {
+        if !commands.is_empty() {
+            fs::write(&self.input_fifo, commands)?;
+        }
 
         Ok(())
     }
+}
+
+/// Prints to the kakoune debug log, using the same syntax as `println!`.
+#[allow(unused)]
+macro_rules! kak_print {
+    ($literal:expr) => {
+        println!("echo -debug '{}'", $literal)
+    };
+    ($template:expr, $($arg:tt)*) => ({
+        println!("echo -debug '{}'", $crate::util::editor_escape(&format!($template, $($arg)*)));
+    })
 }

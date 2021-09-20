@@ -206,7 +206,7 @@ impl LocationList {
 
     /// Removes all current highlighters for this list
     fn purge_highlighters(&self, ctx: Context) -> Result<(), Box<dyn Error>> {
-        ctx.exec_silent(
+        ctx.exec(
             self.active_buffers
                 .iter()
                 .map(|bufname| {
