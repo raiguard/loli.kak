@@ -1,6 +1,10 @@
 # kak-loli
 
-An implementation of proper [location lists](http://vimdoc.sourceforge.net/htmldoc/quickfix.html) for [kakoune](https://kakoune.org). kak does have a naive `goto` functionality for its built-in `grep`, `make`, and `spell` utilities, but these duplicate a lot of code, do not work well when lines are changed, and are generally a hacked implementation. This plugin aims to provide a standard interface for kakoune tools to use, for generic global and client-specific location lists.
+An implementation of proper [location lists](http://vimdoc.sourceforge.net/htmldoc/quickfix.html) for [kakoune](https://kakoune.org).
+
+kakoune does have a basic goto implementation for its built-in `grep`, `make`, and `spell` tools, but these are very naive and are easily prone to breakage. Additionally, a plugin or script that wishes to implement this kind of functionality has to do it all again from scratch, resulting in a fractured ecosystem and lots of duplicate code.
+
+`kak-loli` aims to provide a standard interface for scripts to populate a location list, then provide a single set of commands for iterating, viewing, and navigating these lists.
 
 ## Project status
 
@@ -18,7 +22,7 @@ cd kak-loli
 cargo install --locked --force --path . --debug
 ```
 
-This will compile `kak-loli` and put the `kak-loli` executable on your `path`. If you wish to compile in release move, remove the `--debug` flag.
+This compile and place the `kak-loli` executable on your path. If you wish to compile in release mode, remove the `--debug` flag.
 
 Next, put this at the top of your `kakrc`:
 
