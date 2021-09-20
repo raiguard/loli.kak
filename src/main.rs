@@ -51,6 +51,8 @@ enum Command {
         // TODO: This is redundant!
         client: String,
     },
+    /// Clears the given location list
+    Clear,
     /// Creates a new location list based on grep output
     Grep {
         /// The current kakoune timestamp
@@ -102,12 +104,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     .map(|location| &location.filename)
                     .contains(&bufname)
                 {
-                    println!(
-                        "add-highlighter -override buffer/ ranges loli_{0}_{1}_highlight
-                        add-highlighter -override buffer/ ranges loli_{0}_{1}_indices",
-                        list_key,
-                        util::strip_an(&bufname)
-                    )
+                    util::add_highlighters(list_key, &bufname, false)
                 };
             }
 
@@ -119,14 +116,22 @@ fn main() -> Result<(), Box<dyn Error>> {
                     .map(|location| &location.filename)
                     .contains(&bufname)
                 {
-                    println!(
-                        "add-highlighter -override buffer/ ranges loli_{0}_{1}_highlight
-                        add-highlighter -override buffer/ ranges loli_{0}_{1}_indices",
-                        client,
-                        util::strip_an(&bufname)
-                    )
+                    util::add_highlighters(&client, &bufname, true)
                 };
             }
+        }
+        Command::Clear => {
+            // println!(
+            //     "remove-highlighter {0}/ranges_loli_{1}_{2}_highlight
+            //     remove-highlighter {0}/ranges_loli_{1}_{2}_highlight",
+            //     if list_key == DEFAULT_NAME {
+            //         "buffer"
+            //     } else {
+            //         "window"
+            //     },
+            //     list_key,
+            //     util::strip_an(&bufname)
+            // )
         }
         Command::Grep {
             buffers,
@@ -141,12 +146,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             if list_key == DEFAULT_NAME {
                 global_highlight_open_buffers(&files, &buffers, &list_key);
             } else {
-                println!(
-                    "add-highlighter -override buffer/ ranges loli_{0}_{1}_highlight
-                    add-highlighter -override buffer/ ranges loli_{0}_{1}_indices",
-                    list_key,
-                    util::strip_an(&this_buffer)
-                )
+                util::add_highlighters(list_key, &this_buffer, true)
             }
             lists.lists.insert(list_key.to_string(), list);
             lists.write();
@@ -173,10 +173,10 @@ fn init(app: &App) {
     );
 
     let script: &str = include_str!("../rc/loli.kak");
-    let lgrep: &str = include_str!("../rc/lgrep.kak");
+    let grep: &str = include_str!("../rc/grep.kak");
     let test: &str = include_str!("../rc/test.kak");
 
-    println!("{}\n{}\n{}\n{}", script, lgrep, test, loli_cmd);
+    println!("{}\n{}\n{}\n{}", script, grep, test, loli_cmd);
 }
 
 fn get_local_path(session: &str) -> PathBuf {
