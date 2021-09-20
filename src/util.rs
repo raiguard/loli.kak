@@ -25,6 +25,6 @@ macro_rules! kak_print {
         println!("echo -debug '{}'", $literal)
     };
     ($template:expr, $($arg:tt)*) => ({
-        println!("echo -debug '{}'", format!($template, $($arg)*));
+        println!("echo -debug '{}'", $crate::util::editor_escape(&format!($template, $($arg)*)));
     })
 }
