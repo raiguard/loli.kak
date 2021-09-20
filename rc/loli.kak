@@ -1,64 +1,45 @@
 decl str loli_cmd
-
+# FIXME: This is temporary
 face global loli_highlight "default+r"
 
-# For performance reasons, kakoune does not provide all variables to all shell expansions
-# Therefore, we must write the actual commands to $kak_command_fifo so kakoune can see the
-# variable names directly, instead of using indirection
+# HOOKS
 
-# def -hidden -params 1 lgnew %{
-#     nop %sh{
-#         echo "eval %sh{ \$kak_opt_loli_cmd -t \$kak_timestamp new -t \$kak_timestamp \"\$kak_quoted_opt_$1\" }" > $kak_command_fifo
-#     }
-# }
-
-# def -hidden -params 1 lcnew %{
-#     nop %sh{
-#         echo "eval %sh{ \$kak_opt_loli_cmd -c $kak_client new -t \$kak_timestamp \"\$kak_quoted_opt_$1\" }" > $kak_command_fifo
-#     }
-# }
-
-# hook global BufCreate .* %{
-#     eval %sh{
-#         $kak_opt_loli_cmd highlight $kak_bufname
-#     }
-# }
-
-def gclear %{
-    eval %sh{
-        $kak_opt_loli_cmd clear $kak_bufname
-    }
-}
-
-def cclear %{
-    eval %sh{
-        $kak_opt_loli_cmd -c $kak_client clear $kak_bufname
-    }
-}
-
+# Highlight newly opened buffers
 hook global WinDisplay .* %{
-    eval %sh{
+    evaluate-commands %sh{
         $kak_opt_loli_cmd highlight $kak_bufname $kak_client
     }
 }
 
 # Delete store file when the session ends
 hook global KakEnd .* %{
-    eval %sh{ $kak_opt_loli_cmd clean }
+    evaluate-commands %sh{ $kak_opt_loli_cmd clean }
 }
 
-# Update store when the kak timestamp changes
-declare-option -hidden int prev_timestamp 0
+# GREP
 
-hook -group buf-change global NormalIdle .* %{
+define-command -params .. -file-completion ggrep %{
     evaluate-commands %sh{
-        if [ "$kak_timestamp" -gt "$kak_opt_prev_timestamp" ]; then
-            printf 'trigger-user-hook BufChange\n'
-            printf 'set-option buffer prev_timestamp %s\n' "$kak_timestamp"
+        if [ $# -eq 0 ]; then
+            set -- "${kak_selection}"
         fi
+
+        output=$(mktemp -d "${TMPDIR:-/tmp}"/kak-grep.XXXXXXXX)/fifo
+        rg --vimgrep --trim  "$@" | tr -d '\r' > ${output} 2>&1
+
+        $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo grep "${output}"
     }
 }
 
-# hook global User BufChange %{
-#     echo -debug "%val{timestamp} UPDATE RANGES"
-# }
+define-command -params .. -file-completion cgrep %{
+    evaluate-commands %sh{
+        if [ $# -eq 0 ]; then
+            set -- "${kak_selection}"
+        fi
+
+        output=$(mktemp -d "${TMPDIR:-/tmp}"/kak-grep.XXXXXXXX)/fifo
+        rg --vimgrep --trim  "$@" | tr -d '\r' > ${output} 2>&1
+
+        $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo -c $kak_client grep "${output}"
+    }
+}

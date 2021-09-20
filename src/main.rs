@@ -173,10 +173,9 @@ fn init(app: &App) {
     );
 
     let script: &str = include_str!("../rc/loli.kak");
-    let grep: &str = include_str!("../rc/grep.kak");
     let test: &str = include_str!("../rc/test.kak");
 
-    println!("{}\n{}\n{}\n{}", script, grep, test, loli_cmd);
+    println!("{}\n{}\n{}", script, test, loli_cmd);
 }
 
 fn get_local_path(session: &str) -> PathBuf {
