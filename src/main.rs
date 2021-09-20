@@ -68,12 +68,19 @@ fn main() -> Result<(), Box<dyn Error>> {
             kak_print!(output);
         }
         Command::Grep { output_path } => {
+            // let (input_fifo, output_fifo) = verify_fifos(&app)?;
+
             let list_key = match app.client_name {
                 Some(ref client_name) => client_name,
                 None => DEFAULT_NAME,
             };
             let list = LocationList::from_grep(list_key, fs::read_to_string(output_path)?)?;
             kak_print!("{:#?}", list);
+
+            let mut lists = Lists::from_file(&get_local_path(&app.session_name))?;
+
+            lists.insert(list);
+            lists.write();
         }
     }
 
@@ -113,16 +120,18 @@ fn get_local_path(session: &str) -> PathBuf {
 
     let mut local_path: PathBuf = [local_path, "kak", "loli"].iter().collect();
     if !local_path.exists() {
-        fs::create_dir_all(&local_path);
+        fs::create_dir_all(&local_path).expect("Could not create local data directory");
     }
     local_path.push(format!("loli-store-{}", session));
 
     local_path
 }
 
-fn verify_fifos(app: &App) -> Result<(&PathBuf, &PathBuf), Box<dyn Error>> {
+fn verify_fifos(app: &App) -> Result<(PathBuf, PathBuf), Box<dyn Error>> {
     match (&app.input_fifo, &app.output_fifo) {
-        (Some(input_fifo), Some(output_fifo)) => Ok((input_fifo, output_fifo)),
+        (Some(input_fifo), Some(output_fifo)) => {
+            Ok((input_fifo.to_owned(), output_fifo.to_owned()))
+        }
         _ => Err("Missing one or both FIFOs".into()),
     }
 }

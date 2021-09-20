@@ -38,6 +38,15 @@ impl Lists {
         Ok(lists)
     }
 
+    pub fn insert(&mut self, list: LocationList) {
+        // Clear data for previous entry
+        if let Some(existing) = self.lists.get(&list.name) {
+            existing.purge_highlighters();
+        }
+
+        self.lists.insert(list.name.clone(), list);
+    }
+
     pub fn write(&self) {
         fs::write(
             &self.path,
@@ -50,9 +59,10 @@ impl Lists {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct LocationList {
+    pub active_buffers: Vec<String>,
+    pub index: u32,
     pub locations: Vec<Location>,
     pub name: String,
-    pub index: u32,
 }
 
 impl LocationList {
@@ -86,6 +96,7 @@ impl LocationList {
         }
 
         Ok(LocationList {
+            active_buffers: vec![],
             name: name.to_string(),
             locations,
             index: 0,
@@ -149,6 +160,7 @@ impl LocationList {
             name: name.to_string(),
             locations,
             index: 0,
+            active_buffers: vec![],
         })
     }
 
@@ -189,6 +201,30 @@ impl LocationList {
         );
 
         options.keys().map(|key| key.to_string()).collect()
+    }
+
+    /// Removes all current highlighters for this list
+    fn purge_highlighters(&self) {
+        println!(
+            "{}",
+            self.active_buffers
+                .iter()
+                .map(|bufname| {
+                    format!(
+                        "eval -save-regs a %{{
+                        execute-keys '\"aZ'
+                        edit {0}
+                        remove-highlighter buffer/ranges_loli_{1}_{2}_highlight
+                        remove-highlighter buffer/ranges_loli_{1}_{2}_indices
+                        execute-keys '\"az'
+                    }}",
+                        bufname,
+                        self.name,
+                        util::strip_an(bufname)
+                    )
+                })
+                .join("\n")
+        );
     }
 }
 
