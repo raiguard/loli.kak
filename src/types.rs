@@ -9,6 +9,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
 
+use crate::context::Context;
 use crate::util;
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -38,10 +39,10 @@ impl Lists {
         Ok(lists)
     }
 
-    pub fn insert(&mut self, list: LocationList) {
+    pub fn insert(&mut self, list: LocationList, ctx: Context) {
         // Clear data for previous entry
         if let Some(existing) = self.lists.get(&list.name) {
-            existing.purge_highlighters();
+            existing.purge_highlighters(ctx);
         }
 
         self.lists.insert(list.name.clone(), list);
@@ -204,9 +205,8 @@ impl LocationList {
     }
 
     /// Removes all current highlighters for this list
-    fn purge_highlighters(&self) {
-        println!(
-            "{}",
+    fn purge_highlighters(&self, ctx: Context) -> Result<(), Box<dyn Error>> {
+        ctx.exec_silent(
             self.active_buffers
                 .iter()
                 .map(|bufname| {
@@ -223,8 +223,8 @@ impl LocationList {
                         util::strip_an(bufname)
                     )
                 })
-                .join("\n")
-        );
+                .join("\n"),
+        )
     }
 }
 

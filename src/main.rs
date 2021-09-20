@@ -8,8 +8,10 @@ use structopt::StructOpt;
 #[macro_use]
 mod util;
 
+mod context;
 mod types;
 
+use context::Context;
 use types::*;
 
 #[derive(StructOpt)]
@@ -41,10 +43,7 @@ enum Command {
     /// Prints initialization kakscript
     Init,
 
-    /// This is a test!
-    Test,
-
-    /// Cleans the store for this session
+    /// Deletes the store for this session
     Clean,
 
     /// Parse grep-like results into a location list
@@ -58,34 +57,21 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     match app.cmd {
         Command::Init => init(&app),
-        Command::Test => {
-            let (input_fifo, output_fifo) = verify_fifos(&app)?;
-            fs::write(
-                input_fifo,
-                format!(
-                    "echo -to-file {} \"%val{{client}}\"",
-                    output_fifo.to_str().ok_or("Invalid output FIFO path")?
-                ),
-            )?;
-            let output = fs::read_to_string(output_fifo)?;
-            kak_print!(output);
-        }
         Command::Clean => {
             fs::remove_file(&get_local_path(&app.session_name))?;
         }
-        Command::Grep { output_path } => {
-            // let (input_fifo, output_fifo) = verify_fifos(&app)?;
+        Command::Grep { ref output_path } => {
+            let ctx = Context::new(app.input_fifo, app.output_fifo)?;
 
             let list_key = match app.client_name {
                 Some(ref client_name) => client_name,
                 None => DEFAULT_NAME,
             };
             let list = LocationList::from_grep(list_key, fs::read_to_string(output_path)?)?;
-            kak_print!("{:#?}", list);
 
             let mut lists = Lists::from_file(&get_local_path(&app.session_name))?;
 
-            lists.insert(list);
+            lists.insert(list, ctx);
             lists.write();
         }
     }
@@ -131,15 +117,6 @@ fn get_local_path(session: &str) -> PathBuf {
     local_path.push(format!("loli-store-{}", session));
 
     local_path
-}
-
-fn verify_fifos(app: &App) -> Result<(PathBuf, PathBuf), Box<dyn Error>> {
-    match (&app.input_fifo, &app.output_fifo) {
-        (Some(input_fifo), Some(output_fifo)) => {
-            Ok((input_fifo.to_owned(), output_fifo.to_owned()))
-        }
-        _ => Err("Missing one or both FIFOs".into()),
-    }
 }
 
 // OLD STUFF
