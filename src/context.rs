@@ -2,16 +2,21 @@ use std::error::Error;
 use std::fs;
 use std::path::PathBuf;
 
+use crate::util;
+
 pub struct Context {
     input_fifo: PathBuf,
     output_fifo: PathBuf,
     output_fifo_str: String,
+    session: String,
+    pub store: PathBuf,
 }
 
 impl Context {
     pub fn new(
         input_fifo: Option<PathBuf>,
         output_fifo: Option<PathBuf>,
+        session: String,
     ) -> Result<Self, Box<dyn Error>> {
         match (input_fifo, output_fifo) {
             (Some(input_fifo), Some(output_fifo)) => Ok(Self {
@@ -21,6 +26,8 @@ impl Context {
                     .ok_or("Invalid output FIFO path")?
                     .to_string(),
                 output_fifo,
+                session,
+                store: util::get_store_path(&session),
             }),
             _ => Err("Missing one or both FIFOs".into()),
         }

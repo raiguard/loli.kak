@@ -33,16 +33,16 @@ impl Lists {
         Ok(lists)
     }
 
-    pub fn from_file(path: &Path) -> Result<Self, Box<dyn Error>> {
-        let file = fs::read_to_string(&path).expect("Could not read store file");
+    pub fn from_file(ctx: &Context) -> Result<Self, Box<dyn Error>> {
+        let file = fs::read_to_string(ctx.store).expect("Could not read store file");
         let lists: Lists = serde_json::from_str(&file).expect("Could not deserialize store");
         Ok(lists)
     }
 
-    pub fn insert(&mut self, list: LocationList, ctx: Context) {
+    pub fn insert(&mut self, list: LocationList, ctx: &Context) {
         // Clear data for previous entry
         if let Some(existing) = self.lists.get(&list.name) {
-            existing.purge_highlighters(ctx);
+            existing.purge_highlighters(&ctx);
         }
 
         self.lists.insert(list.name.clone(), list);
@@ -205,7 +205,7 @@ impl LocationList {
     }
 
     /// Removes all current highlighters for this list
-    fn purge_highlighters(&self, ctx: Context) -> Result<(), Box<dyn Error>> {
+    fn purge_highlighters(&self, ctx: &Context) -> Result<(), Box<dyn Error>> {
         ctx.exec(
             self.active_buffers
                 .iter()

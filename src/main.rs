@@ -1,4 +1,3 @@
-use directories::BaseDirs;
 use std::env;
 use std::error::Error;
 use std::fs;
@@ -57,10 +56,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     match app.cmd {
         Command::Init => init(&app),
         Command::Clean => {
-            fs::remove_file(&get_local_path(&app.session_name))?;
+            fs::remove_file(&util::get_store_path(&app.session_name))?;
         }
         Command::Grep { ref output_path } => {
-            let ctx = Context::new(app.input_fifo, app.output_fifo)?;
+            let ctx = Context::new(app.input_fifo, app.output_fifo, app.session_name)?;
 
             let list_key = match app.client_name {
                 Some(ref client_name) => client_name,
@@ -68,9 +67,9 @@ fn main() -> Result<(), Box<dyn Error>> {
             };
             let list = LocationList::from_grep(list_key, fs::read_to_string(output_path)?)?;
 
-            let mut lists = Lists::from_file(&get_local_path(&app.session_name))?;
+            let mut lists = Lists::from_file(&ctx)?;
 
-            lists.insert(list, ctx);
+            lists.insert(list, &ctx);
             lists.write();
         }
     }
@@ -79,7 +78,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn init(app: &App) {
-    let local_path = get_local_path(&app.session_name);
+    let local_path = util::get_store_path(&app.session_name);
 
     // Creates file and populates it with empty, but valid, data
     Lists::new(&local_path).expect("Could not create session store.");
@@ -97,25 +96,6 @@ fn init(app: &App) {
     let test: &str = include_str!("../rc/test.kak");
 
     println!("{}\n{}\n{}", script, test, loli_cmd);
-}
-
-fn get_local_path(session: &str) -> PathBuf {
-    // Create or re-create the store file
-    // TODO: Have multiple stores for specific lists to improve performance
-    let local_path = BaseDirs::new().expect("Could not load local directory");
-
-    let local_path = local_path
-        .data_local_dir()
-        .to_str()
-        .expect("Could not convert local data path");
-
-    let mut local_path: PathBuf = [local_path, "kak", "loli"].iter().collect();
-    if !local_path.exists() {
-        fs::create_dir_all(&local_path).expect("Could not create local data directory");
-    }
-    local_path.push(format!("loli-store-{}", session));
-
-    local_path
 }
 
 // OLD STUFF
