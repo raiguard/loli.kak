@@ -12,8 +12,10 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use structopt::StructOpt;
 
-mod types;
+#[macro_use]
 mod util;
+
+mod types;
 
 use types::*;
 
@@ -73,12 +75,14 @@ enum Command {
     },
 }
 
+const DEFAULT_NAME: &str = "LOLIGLOBAL";
+
 fn main() -> Result<(), Box<dyn Error>> {
     let app = App::from_args();
 
     let list_key = match app.client_name {
         Some(ref client_name) => client_name.clone(),
-        None => "LOLIGLOBAL".to_string(),
+        None => DEFAULT_NAME.to_string(),
     };
 
     match app.cmd {
@@ -91,7 +95,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             let mut lists = Lists::from_file(&get_local_path(&app.session_name))?;
 
             // Highlight global list on the buffer level
-            if let Some(loli) = lists.lists.get("LOLIGLOBAL") {
+            if let Some(loli) = lists.lists.get(DEFAULT_NAME) {
                 if loli
                     .locations
                     .iter()
@@ -132,7 +136,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             let input = fs::read_to_string(filename)?;
             let list = LocationList::from_grep(&list_key, input)?;
             let files = list.gen_ranges(timestamp);
-            if list_key == "LOLIGLOBAL" {
+            if list_key == DEFAULT_NAME {
                 global_highlight_open_buffers(&files, &buffers, &list_key);
             } else {
                 println!(
