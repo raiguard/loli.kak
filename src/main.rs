@@ -81,8 +81,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let app = App::from_args();
 
     let list_key = match app.client_name {
-        Some(ref client_name) => client_name.clone(),
-        None => DEFAULT_NAME.to_string(),
+        Some(ref client_name) => client_name,
+        None => DEFAULT_NAME,
     };
 
     match app.cmd {
@@ -145,7 +145,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     util::strip_an(&this_buffer)
                 )
             }
-            lists.lists.insert(list_key, list);
+            lists.lists.insert(list_key.to_string(), list);
             lists.write();
         }
         _ => (),
