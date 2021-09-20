@@ -195,7 +195,7 @@ fn get_local_path(session: &str) -> PathBuf {
     local_path
 }
 
-fn global_highlight_open_buffers(files: &Vec<String>, buffers: &Vec<String>, list_key: &str) {
+fn global_highlight_open_buffers(files: &[String], buffers: &[String], list_key: &str) {
     for (filename, stripped) in buffers
         .iter()
         .map(|bufname| (bufname, util::strip_an(&bufname)))

@@ -7,7 +7,7 @@ use std::error::Error;
 use std::fmt::Display;
 use std::fs;
 use std::fs::File;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::string;
 use thiserror::Error;
@@ -21,9 +21,9 @@ pub struct Lists {
 }
 
 impl Lists {
-    pub fn new(path: &PathBuf) -> Result<Self, Box<dyn Error>> {
+    pub fn new(path: &Path) -> Result<Self, Box<dyn Error>> {
         let lists = Lists {
-            path: path.clone(),
+            path: path.to_owned(),
             lists: HashMap::new(),
         };
         fs::write(
@@ -35,7 +35,7 @@ impl Lists {
         Ok(lists)
     }
 
-    pub fn from_file(path: &PathBuf) -> Result<Self, Box<dyn Error>> {
+    pub fn from_file(path: &Path) -> Result<Self, Box<dyn Error>> {
         let file = fs::read_to_string(&path).expect("Could not read store file");
         let lists: Lists = serde_json::from_str(&file).expect("Could not deserialize store");
         Ok(lists)
