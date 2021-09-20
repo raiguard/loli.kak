@@ -44,6 +44,9 @@ enum Command {
     /// Deletes the store for this session
     Clean,
 
+    /// Clears the location list for this client or session
+    Clear,
+
     /// Parse grep-like results into a location list
     Grep { output_path: PathBuf },
 }
@@ -55,6 +58,18 @@ fn main() -> Result<(), Box<dyn Error>> {
         Command::Init => init(&app),
         Command::Clean => {
             fs::remove_file(&util::get_store_path(&app.session_name))?;
+        }
+        Command::Clear => {
+            let ctx = Context::new(
+                app.input_fifo,
+                app.output_fifo,
+                app.session_name,
+                app.client_name,
+            )?;
+
+            let mut lists = Lists::from_file(&ctx)?;
+            lists.clear(&ctx)?;
+            lists.write();
         }
         Command::Grep { ref output_path } => {
             let ctx = Context::new(
@@ -68,7 +83,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
             let mut lists = Lists::from_file(&ctx)?;
 
-            lists.insert(list, &ctx);
+            lists.insert(list, &ctx)?;
             lists.write();
         }
     }

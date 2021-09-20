@@ -39,13 +39,22 @@ impl Lists {
         Ok(lists)
     }
 
-    pub fn insert(&mut self, list: LocationList, ctx: &Context) {
-        // Clear data for previous entry
-        if let Some(existing) = self.lists.get(&list.name) {
-            existing.purge_highlighters(&ctx);
-        }
+    pub fn insert(&mut self, list: LocationList, ctx: &Context) -> Result<(), Box<dyn Error>> {
+        // Clear data for previous entry, if there is one
+        self.clear(&ctx)?;
 
         self.lists.insert(list.name.clone(), list);
+
+        Ok(())
+    }
+
+    pub fn clear(&mut self, ctx: &Context) -> Result<(), Box<dyn Error>> {
+        if let Some(existing) = self.lists.get(&ctx.list_key) {
+            existing.purge_highlighters(&ctx)?;
+            self.lists.remove(&ctx.list_key);
+        }
+
+        Ok(())
     }
 
     pub fn write(&self) {

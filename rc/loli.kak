@@ -16,6 +16,20 @@ hook global KakEnd .* %{
     evaluate-commands %sh{ $kak_opt_loli_cmd clean }
 }
 
+# CLEAR
+
+define-command gclear %{
+    evaluate-commands %sh{
+        $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo clear
+    }
+}
+
+define-command cclear %{
+    evaluate-commands %sh{
+        $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo -c $kak_client clear
+    }
+}
+
 # GREP
 
 define-command -params .. -file-completion ggrep %{
