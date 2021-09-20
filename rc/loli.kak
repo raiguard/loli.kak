@@ -58,6 +58,24 @@ define-command -params .. -file-completion cgrep %{
     }
 }
 
+# STR-LIST
+
+define-command -params 1 gnew %{
+    evaluate-commands %sh{
+        echo "evaluate-commands %sh{
+            \$kak_opt_loli_cmd -i \$kak_command_fifo -o \$kak_response_fifo list \"\$kak_quoted_opt_$1\"
+        }" >> $kak_command_fifo
+    }
+}
+
+define-command -params 1 cnew %{
+    evaluate-commands %sh{
+        echo "evaluate-commands %sh{
+            $kak_opt_loli_cmd -i \$kak_command_fifo -o \$kak_response_fifo -c $kak_client list \"\$kak_quoted_opt_$1\"
+        }" >> $kak_command_fifo
+    }
+}
+
 # TEST
 
 define-command gtest %{

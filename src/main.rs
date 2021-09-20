@@ -49,6 +49,9 @@ enum Command {
 
     /// Parse grep-like results into a location list
     Grep { output_path: PathBuf },
+
+    /// Parse a str-list into a location list
+    List { input: String },
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -80,6 +83,21 @@ fn main() -> Result<(), Box<dyn Error>> {
             )?;
 
             let list = LocationList::from_grep(&ctx.list_key, fs::read_to_string(output_path)?)?;
+
+            let mut lists = Lists::from_file(&ctx)?;
+
+            lists.insert(list, &ctx)?;
+            lists.write();
+        }
+        Command::List { input } => {
+            let ctx = Context::new(
+                app.input_fifo,
+                app.output_fifo,
+                app.session_name,
+                app.client_name,
+            )?;
+
+            let list = LocationList::from_str_list(&ctx.list_key, input)?;
 
             let mut lists = Lists::from_file(&ctx)?;
 
