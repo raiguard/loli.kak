@@ -103,7 +103,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                     .contains(&bufname)
                 {
                     println!(
-                        "add-highlighter -override buffer/ ranges loli_{}_{}_highlight",
+                        "add-highlighter -override buffer/ ranges loli_{0}_{1}_highlight
+                        add-highlighter -override buffer/ ranges loli_{0}_{1}_indices",
                         list_key,
                         util::strip_an(&bufname)
                     )
@@ -119,7 +120,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                     .contains(&bufname)
                 {
                     println!(
-                        "add-highlighter -override window/ ranges loli_{}_{}_highlight",
+                        "add-highlighter -override buffer/ ranges loli_{0}_{1}_highlight
+                        add-highlighter -override buffer/ ranges loli_{0}_{1}_indices",
                         client,
                         util::strip_an(&bufname)
                     )
@@ -140,7 +142,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                 global_highlight_open_buffers(&files, &buffers, &list_key);
             } else {
                 println!(
-                    "add-highlighter -override window/ ranges loli_{}_{}_highlight",
+                    "add-highlighter -override buffer/ ranges loli_{0}_{1}_highlight
+                    add-highlighter -override buffer/ ranges loli_{0}_{1}_indices",
                     list_key,
                     util::strip_an(&this_buffer)
                 )
@@ -204,8 +207,9 @@ fn global_highlight_open_buffers(files: &[String], buffers: &[String], list_key:
         println!(
             "eval -save-regs a %{{
                 exec '\"aZ'
-                edit {}
-                add-highlighter -override buffer/ ranges loli_{}_{}_highlight
+                edit {0}
+                add-highlighter -override buffer/ ranges loli_{1}_{2}_highlight
+                add-highlighter -override buffer/ ranges loli_{1}_{2}_indices
                 exec '\"az'
             }}",
             filename, list_key, stripped

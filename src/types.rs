@@ -158,12 +158,18 @@ impl LocationList {
     pub fn gen_ranges(&self, timestamp: u32) -> Vec<String> {
         let mut options = HashMap::new();
 
-        for location in &self.locations {
+        for (i, location) in self.locations.iter().enumerate() {
             let filename = util::strip_an(&location.filename);
 
-            let mut entries = options.entry(filename).or_insert(Vec::new());
+            let mut highlights = options
+                .entry(filename.clone() + "_highlight")
+                .or_insert_with(Vec::new);
+            highlights.push(format!("{}|{}", location.range, "loli_highlight"));
 
-            entries.push(format!("{}|{}", location.range, "loli_highlight"));
+            let mut indices = options
+                .entry(filename.clone() + "_indices")
+                .or_insert_with(Vec::new);
+            indices.push(format!("{}|{}", location.range, i));
         }
 
         println!(
@@ -172,10 +178,8 @@ impl LocationList {
                 .iter()
                 .map(|(name, members)| {
                     format!(
-                        "decl range-specs loli_{0}_{1}_highlight
-                        set global loli_{0}_{1}_highlight {2} '{3}'
-                        # This needs to be set in the buffers when they're opened
-                        # add-highlighter buffer/ ranges loli_{0}_{1}_highlight",
+                        "decl range-specs loli_{0}_{1}
+                        set global loli_{0}_{1} {2} '{3}'",
                         self.name,
                         name,
                         timestamp,
