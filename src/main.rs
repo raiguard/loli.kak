@@ -1,15 +1,8 @@
-#![allow(dead_code, unused)]
-
 use directories::BaseDirs;
-use itertools::Itertools;
-use std::collections::HashSet;
 use std::env;
 use std::error::Error;
-use std::fmt::Display;
 use std::fs;
-use std::fs::File;
 use std::path::PathBuf;
-use std::str::FromStr;
 use structopt::StructOpt;
 
 #[macro_use]
@@ -29,7 +22,7 @@ struct App {
     #[structopt(short, long)]
     client_name: Option<String>,
 
-    /// The session that this list is being created for
+    // / The session that this list is being created for
     #[structopt(short, long)]
     session_name: String,
 
@@ -45,56 +38,20 @@ struct App {
 
 #[derive(StructOpt)]
 enum Command {
-    // /// Cleans up (deletes) the store file for the given session
-    // Clean,
-    // /// Prints highlighters for the current buffer, if any
-    // Highlight {
-    //     /// The buffer name
-    //     bufname: String,
-    //     /// The cilent name
-    //     // TODO: This is redundant!
-    //     client: String,
-    // },
-    // /// Clears the given location list
-    // Clear,
-    // /// Creates a new location list based on grep output
-    // Grep {
-    //     /// The current kakoune timestamp
-    //     #[structopt(short, long)]
-    //     timestamp: u32,
-    //     /// The file containing the grep output. Grep output must include column numbers
-    //     filename: PathBuf,
-    //     /// All of the currently open buffers
-    //     #[structopt(short, long)]
-    //     buffers: Vec<String>,
-    //     /// The current buffer name
-    //     #[structopt(long)]
-    //     this_buffer: String,
-    // },
-    // /// Creates a new location list from a str-list kakoune setting
-    // New {
-    //     /// The current kakoune timestamp
-    //     #[structopt(short, long)]
-    //     timestamp: u32,
-    //     /// The contents of the `str-list` option
-    //     list: String,
-    // },
     /// Prints initialization kakscript
     Init,
 
     /// This is a test!
     Test,
+
+    /// Parse grep-like results into a location list
+    Grep { output_path: PathBuf },
 }
 
 const DEFAULT_NAME: &str = "LOLIGLOBAL";
 
 fn main() -> Result<(), Box<dyn Error>> {
     let app = App::from_args();
-
-    // let list_key = match app.client_name {
-    //     Some(ref client_name) => client_name,
-    //     None => DEFAULT_NAME,
-    // };
 
     match app.cmd {
         Command::Init => init(&app),
@@ -103,81 +60,22 @@ fn main() -> Result<(), Box<dyn Error>> {
             fs::write(
                 input_fifo,
                 format!(
-                    "echo -to-file {} \"%val{{session}}\"",
+                    "echo -to-file {} \"%val{{client}}\"",
                     output_fifo.to_str().ok_or("Invalid output FIFO path")?
                 ),
-            );
+            )?;
             let output = fs::read_to_string(output_fifo)?;
             kak_print!(output);
         }
+        Command::Grep { output_path } => {
+            let list_key = match app.client_name {
+                Some(ref client_name) => client_name,
+                None => DEFAULT_NAME,
+            };
+            let list = LocationList::from_grep(list_key, fs::read_to_string(output_path)?)?;
+            kak_print!("{:#?}", list);
+        }
     }
-
-    // match app.cmd {
-    // Command::Init => init(&app),
-    // Command::Clean => {
-    //     fs::remove_file(get_local_path(&app.session_name))
-    //         .expect("Could not delete store file");
-    // }
-    // Command::Highlight { bufname, client } => {
-    //     let mut lists = Lists::from_file(&get_local_path(&app.session_name))?;
-
-    //     // Highlight global list on the buffer level
-    //     if let Some(loli) = lists.lists.get(DEFAULT_NAME) {
-    //         if loli
-    //             .locations
-    //             .iter()
-    //             .map(|location| &location.filename)
-    //             .contains(&bufname)
-    //         {
-    //             util::add_highlighters(list_key, &bufname, false)
-    //         };
-    //     }
-
-    //     // Highlight client list on the window level
-    //     if let Some(loli) = lists.lists.get(&client) {
-    //         if loli
-    //             .locations
-    //             .iter()
-    //             .map(|location| &location.filename)
-    //             .contains(&bufname)
-    //         {
-    //             util::add_highlighters(&client, &bufname, true)
-    //         };
-    //     }
-    // }
-    // Command::Clear => {
-    //     // println!(
-    //     //     "remove-highlighter {0}/ranges_loli_{1}_{2}_highlight
-    //     //     remove-highlighter {0}/ranges_loli_{1}_{2}_highlight",
-    //     //     if list_key == DEFAULT_NAME {
-    //     //         "buffer"
-    //     //     } else {
-    //     //         "window"
-    //     //     },
-    //     //     list_key,
-    //     //     util::strip_an(&bufname)
-    //     // )
-    // }
-    // Command::Grep {
-    //     buffers,
-    //     filename,
-    //     this_buffer,
-    //     timestamp,
-    // } => {
-    //     let mut lists = Lists::from_file(&get_local_path(&app.session_name))?;
-    //     let input = fs::read_to_string(filename)?;
-    //     let list = LocationList::from_grep(&list_key, input)?;
-    //     let files = list.gen_ranges(timestamp);
-    //     if list_key == DEFAULT_NAME {
-    //         global_highlight_open_buffers(&files, &buffers, &list_key);
-    //     } else {
-    //         util::add_highlighters(list_key, &this_buffer, true)
-    //     }
-    //     lists.lists.insert(list_key.to_string(), list);
-    //     lists.write();
-    // }
-    // _ => (),
-    // };
 
     Ok(())
 }
@@ -186,7 +84,7 @@ fn init(app: &App) {
     let local_path = get_local_path(&app.session_name);
 
     // Creates file and populates it with empty, but valid, data
-    Lists::new(&local_path);
+    Lists::new(&local_path).expect("Could not create session store.");
 
     // Print kakscript commands for init
     let cmd = env::current_exe().unwrap();
@@ -229,21 +127,124 @@ fn verify_fifos(app: &App) -> Result<(&PathBuf, &PathBuf), Box<dyn Error>> {
     }
 }
 
-fn global_highlight_open_buffers(files: &[String], buffers: &[String], list_key: &str) {
-    for (filename, stripped) in buffers
-        .iter()
-        .map(|bufname| (bufname, util::strip_an(&bufname)))
-        .filter(|(_, stripped)| files.contains(stripped))
-    {
-        println!(
-            "eval -save-regs a %{{
-                exec '\"aZ'
-                edit {0}
-                add-highlighter -override buffer/ ranges loli_{1}_{2}_highlight
-                add-highlighter -override buffer/ ranges loli_{1}_{2}_indices
-                exec '\"az'
-            }}",
-            filename, list_key, stripped
-        )
-    }
-}
+// OLD STUFF
+//
+// fn global_highlight_open_buffers(files: &[String], buffers: &[String], list_key: &str) {
+//     for (filename, stripped) in buffers
+//         .iter()
+//         .map(|bufname| (bufname, util::strip_an(&bufname)))
+//         .filter(|(_, stripped)| files.contains(stripped))
+//     {
+//         println!(
+//             "eval -save-regs a %{{
+//                 exec '\"aZ'
+//                 edit {0}
+//                 add-highlighter -override buffer/ ranges loli_{1}_{2}_highlight
+//                 add-highlighter -override buffer/ ranges loli_{1}_{2}_indices
+//                 exec '\"az'
+//             }}",
+//             filename, list_key, stripped
+//         )
+//     }
+// }
+// /// Cleans up (deletes) the store file for the given session
+// Clean,
+// /// Prints highlighters for the current buffer, if any
+// Highlight {
+//     /// The buffer name
+//     bufname: String,
+//     /// The cilent name
+//     // TODO: This is redundant!
+//     client: String,
+// },
+// /// Clears the given location list
+// Clear,
+// /// Creates a new location list based on grep output
+// Grep {
+//     /// The current kakoune timestamp
+//     #[structopt(short, long)]
+//     timestamp: u32,
+//     /// The file containing the grep output. Grep output must include column numbers
+//     filename: PathBuf,
+//     /// All of the currently open buffers
+//     #[structopt(short, long)]
+//     buffers: Vec<String>,
+//     /// The current buffer name
+//     #[structopt(long)]
+//     this_buffer: String,
+// },
+// /// Creates a new location list from a str-list kakoune setting
+// New {
+//     /// The current kakoune timestamp
+//     #[structopt(short, long)]
+//     timestamp: u32,
+//     /// The contents of the `str-list` option
+//     list: String,
+// },
+//
+// match app.cmd {
+// Command::Init => init(&app),
+// Command::Clean => {
+//     fs::remove_file(get_local_path(&app.session_name))
+//         .expect("Could not delete store file");
+// }
+// Command::Highlight { bufname, client } => {
+//     let mut lists = Lists::from_file(&get_local_path(&app.session_name))?;
+
+//     // Highlight global list on the buffer level
+//     if let Some(loli) = lists.lists.get(DEFAULT_NAME) {
+//         if loli
+//             .locations
+//             .iter()
+//             .map(|location| &location.filename)
+//             .contains(&bufname)
+//         {
+//             util::add_highlighters(list_key, &bufname, false)
+//         };
+//     }
+
+//     // Highlight client list on the window level
+//     if let Some(loli) = lists.lists.get(&client) {
+//         if loli
+//             .locations
+//             .iter()
+//             .map(|location| &location.filename)
+//             .contains(&bufname)
+//         {
+//             util::add_highlighters(&client, &bufname, true)
+//         };
+//     }
+// }
+// Command::Clear => {
+//     // println!(
+//     //     "remove-highlighter {0}/ranges_loli_{1}_{2}_highlight
+//     //     remove-highlighter {0}/ranges_loli_{1}_{2}_highlight",
+//     //     if list_key == DEFAULT_NAME {
+//     //         "buffer"
+//     //     } else {
+//     //         "window"
+//     //     },
+//     //     list_key,
+//     //     util::strip_an(&bufname)
+//     // )
+// }
+// Command::Grep {
+//     buffers,
+//     filename,
+//     this_buffer,
+//     timestamp,
+// } => {
+//     let mut lists = Lists::from_file(&get_local_path(&app.session_name))?;
+//     let input = fs::read_to_string(filename)?;
+//     let list = LocationList::from_grep(&list_key, input)?;
+//     let files = list.gen_ranges(timestamp);
+//     if list_key == DEFAULT_NAME {
+//         global_highlight_open_buffers(&files, &buffers, &list_key);
+//     } else {
+//         util::add_highlighters(list_key, &this_buffer, true)
+//     }
+//     lists.lists.insert(list_key.to_string(), list);
+//     lists.write();
+// }
+// _ => (),
+// };

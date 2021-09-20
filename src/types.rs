@@ -1,15 +1,12 @@
 use itertools::Itertools;
 use once_cell::sync::OnceCell;
-use regex::{Match, Regex};
+use regex::Regex;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::error::Error;
 use std::fmt::Display;
 use std::fs;
-use std::fs::File;
 use std::path::{Path, PathBuf};
-use std::str::FromStr;
-use std::string;
 use thiserror::Error;
 
 use crate::util;
@@ -97,8 +94,10 @@ impl LocationList {
 
     pub fn from_grep(name: &str, input: String) -> Result<Self, LocationListErr> {
         static LINE_REGEX: OnceCell<Regex> = OnceCell::new();
-        // TODO: Make columns optional
-        let regex = LINE_REGEX.get_or_init(|| Regex::new(r"^(.*):(\d+):(\d+):(.*)$").unwrap());
+        let regex = LINE_REGEX.get_or_init(|| {
+            Regex::new(r"^(?P<filename>.*?):(?P<line>\d+):(?P<column>\d+)*:?(?P<preview>.*)$")
+                .unwrap()
+        });
 
         let mut locations = Vec::new();
 
@@ -108,12 +107,12 @@ impl LocationList {
                 .ok_or(LocationListErr::InvalidGrepFmt)?;
 
             let filename = captures
-                .get(1)
+                .name("filename")
                 .map(|mtch| mtch.as_str())
                 .ok_or(LocationListErr::InvalidGrepFmt)?;
 
             let line = captures
-                .get(2)
+                .name("line")
                 .map(|mtch| {
                     mtch.as_str()
                         .parse::<u32>()
@@ -121,14 +120,14 @@ impl LocationList {
                 })
                 .ok_or(LocationListErr::InvalidGrepFmt)??;
 
-            let column = captures
-                .get(3)
-                .map(|mtch| {
-                    mtch.as_str()
-                        .parse::<u32>()
-                        .map_err(|_| LocationListErr::InvalidGrepFmt)
-                })
-                .ok_or(LocationListErr::InvalidGrepFmt)??;
+            let column = if let Some(column) = captures.name("column") {
+                column
+                    .as_str()
+                    .parse::<u32>()
+                    .map_err(|_| LocationListErr::InvalidGrepFmt)?
+            } else {
+                1
+            };
 
             let preview = captures
                 .get(4)
