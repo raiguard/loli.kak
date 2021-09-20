@@ -44,6 +44,9 @@ enum Command {
     /// This is a test!
     Test,
 
+    /// Cleans the store for this session
+    Clean,
+
     /// Parse grep-like results into a location list
     Grep { output_path: PathBuf },
 }
@@ -66,6 +69,9 @@ fn main() -> Result<(), Box<dyn Error>> {
             )?;
             let output = fs::read_to_string(output_fifo)?;
             kak_print!(output);
+        }
+        Command::Clean => {
+            fs::remove_file(&get_local_path(&app.session_name))?;
         }
         Command::Grep { output_path } => {
             // let (input_fifo, output_fifo) = verify_fifos(&app)?;
