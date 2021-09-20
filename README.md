@@ -12,17 +12,27 @@ This project is under heavy development, and is not ready for use quite yet. All
 
 ## Installation
 
-### Build from source
-
 Requires [Rust](https://www.rust-lang.org/).
+
+### Precompiled binaries
+
+Coming soon to an AUR near you!
+
+### [plug.kak](https://github.com/andreyorst/plug.kak)
+
+```kakounescript
+plug "raiguard/kak-loli" do %{ cargo install --locked --force --path . }
+```
+
+### Build from source
 
 ```
 git clone https://github.com/raiguard/kak-loli
 cd kak-loli
-cargo install --locked --force --path . --debug
+cargo install --locked --force --path .
 ```
 
-This compile and place the `kak-loli` executable on your path. If you wish to compile in release mode, remove the `--debug` flag.
+This will compile and place the `kak-loli` executable on your path.
 
 Next, put this at the top of your `kakrc`:
 
