@@ -59,7 +59,7 @@ impl Lists {
         Ok(())
     }
 
-    pub fn highlight(&mut self, buffer: String, ctx: &Context) -> Result<(), Box<dyn Error>> {
+    pub fn highlight(&mut self, buffer: &String, ctx: &Context) -> Result<(), Box<dyn Error>> {
         // Highlight the global list on the buffer level
         if let Some(list) = self.lists.get_mut(util::DEFAULT_NAME) {
             if list
@@ -69,7 +69,7 @@ impl Lists {
                 .contains(&buffer)
             {
                 ctx.add_highlighters(&list.name, &buffer, true)?;
-                list.active_buffers.push(buffer.clone());
+                list.active_buffers.push(buffer.to_string());
             };
         };
 
@@ -83,7 +83,7 @@ impl Lists {
                 .contains(&buffer)
             {
                 ctx.add_highlighters(&list.name, &buffer, false)?;
-                list.active_buffers.push(buffer);
+                list.active_buffers.push(buffer.to_string());
             };
         };
 
@@ -110,7 +110,7 @@ pub struct LocationList {
 }
 
 impl LocationList {
-    pub fn from_str_list(name: &str, input: String) -> Result<Self, LocationListErr> {
+    pub fn from_str_list(name: &str, input: &str) -> Result<Self, LocationListErr> {
         static LIST_REGEX: OnceCell<Regex> = OnceCell::new();
         let regex = LIST_REGEX
             .get_or_init(|| Regex::new(r"'(.*?)\|(\d+)\.(\d+),(\d+)\.(\d+)\|(.*?)'").unwrap());
@@ -387,7 +387,7 @@ mod tests {
     fn test_range() {
         assert!(LocationList::from_str_list(
             "foo",
-            "'src/main.rs|1.5,1.7|lorem ipsum dolor sit amet' 'src/foo|rs|1.5,1.7|LOREM IPSUM DOLOR SIT AMET'".to_string()
+            "'src/main.rs|1.5,1.7|lorem ipsum dolor sit amet' 'src/foo|rs|1.5,1.7|LOREM IPSUM DOLOR SIT AMET'"
         )
         .is_ok());
 
@@ -397,7 +397,7 @@ mod tests {
         }
         let list_str = list.iter().join(" ");
 
-        let list = LocationList::from_str_list("foo", list_str).unwrap();
+        let list = LocationList::from_str_list("foo", &list_str).unwrap();
 
         // println!("{:#?}", list);
     }

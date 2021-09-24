@@ -3,6 +3,7 @@ use std::fs;
 use std::path::PathBuf;
 
 use crate::util;
+use crate::App;
 
 /// Prints to the kakoune debug log, using the same syntax as `println!`.
 #[allow(unused)]
@@ -27,29 +28,23 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn new(
-        input_fifo: Option<PathBuf>,
-        output_fifo: Option<PathBuf>,
-        session: String,
-        client: Option<String>,
-        timestamp: Option<usize>,
-    ) -> Result<Self, Box<dyn Error>> {
-        match (input_fifo, output_fifo) {
+    pub fn new(app: &App) -> Result<Self, Box<dyn Error>> {
+        match (&app.input_fifo, &app.output_fifo) {
             (Some(input_fifo), Some(output_fifo)) => Ok(Self {
-                input_fifo,
+                input_fifo: input_fifo.clone(),
                 output_fifo_str: output_fifo
                     .to_str()
                     .ok_or("Invalid output FIFO path")?
                     .to_string(),
-                output_fifo,
-                store: util::get_store_path(&session),
-                list_key: match client {
+                output_fifo: output_fifo.clone(),
+                store: util::get_store_path(&app.session),
+                list_key: match app.client {
                     Some(ref client) => client.to_string(),
                     None => util::DEFAULT_NAME.to_string(),
                 },
-                client,
-                timestamp,
-                // session,
+                client: app.client.clone(),
+                timestamp: app.timestamp,
+                // session: app.session.clone(),
             }),
             _ => Err("Missing one or both FIFOs".into()),
         }

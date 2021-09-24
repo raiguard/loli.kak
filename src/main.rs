@@ -17,30 +17,33 @@ use types::*;
     name = "kak-loli",
     about = "An implementation of location lists for kakoune."
 )]
-struct App {
+pub struct App {
     /// (Optional) The client list to create. If omitted, a global list will be created
     #[structopt(short, long)]
-    client_name: Option<String>,
+    pub client: Option<String>,
 
-    // / The session that this list is being created for
+    /// The session that this list is being created for
     #[structopt(short, long)]
-    session_name: String,
+    pub session: String,
 
+    /// The filepath of kakoune's current command fifo
     #[structopt(short, long)]
-    input_fifo: Option<PathBuf>,
+    pub input_fifo: Option<PathBuf>,
 
+    /// The filepath of kakoune's current response fifo
     #[structopt(short, long)]
-    output_fifo: Option<PathBuf>,
+    pub output_fifo: Option<PathBuf>,
 
+    /// Kakoune's current timestamp for this buffer
     #[structopt(short, long)]
-    timestamp: Option<usize>,
+    pub timestamp: Option<usize>,
 
     #[structopt(subcommand)]
-    cmd: Command,
+    pub cmd: Command,
 }
 
 #[derive(StructOpt)]
-enum Command {
+pub enum Command {
     /// Prints initialization kakscript
     Init,
 
@@ -50,13 +53,13 @@ enum Command {
     /// Clears the location list for this client or session
     Clear,
 
-    /// Parse grep-like results into a location list
+    /// Parses grep-like results into a location list
     Grep { output_path: PathBuf },
 
-    /// Parse a str-list into a location list
+    /// Parses a str-list into a location list
     List { input: String },
 
-    /// Highlight the given buffer's location lists
+    /// Highlights the given buffer's location lists
     Highlight { buffer: String },
 }
 
@@ -66,30 +69,16 @@ fn main() -> Result<(), Box<dyn Error>> {
     match app.cmd {
         Command::Init => init(&app),
         Command::Clean => {
-            fs::remove_file(&util::get_store_path(&app.session_name))?;
+            fs::remove_file(&util::get_store_path(&app.session))?;
         }
         Command::Clear => {
-            let ctx = Context::new(
-                app.input_fifo,
-                app.output_fifo,
-                app.session_name,
-                app.client_name,
-                app.timestamp,
-            )?;
-
+            let ctx = Context::new(&app)?;
             let mut lists = Lists::from_file(&ctx)?;
             lists.clear(&ctx)?;
             lists.write();
         }
         Command::Grep { ref output_path } => {
-            let ctx = Context::new(
-                app.input_fifo,
-                app.output_fifo,
-                app.session_name,
-                app.client_name,
-                app.timestamp,
-            )?;
-
+            let ctx = Context::new(&app)?;
             let list = LocationList::from_grep(&ctx.list_key, fs::read_to_string(output_path)?)?;
 
             let mut lists = Lists::from_file(&ctx)?;
@@ -97,34 +86,20 @@ fn main() -> Result<(), Box<dyn Error>> {
             lists.insert(list, &ctx)?;
             lists.write();
         }
-        Command::List { input } => {
-            let ctx = Context::new(
-                app.input_fifo,
-                app.output_fifo,
-                app.session_name,
-                app.client_name,
-                app.timestamp,
-            )?;
-
-            let list = LocationList::from_str_list(&ctx.list_key, input)?;
+        Command::List { ref input } => {
+            let ctx = Context::new(&app)?;
+            let list = LocationList::from_str_list(&ctx.list_key, &input)?;
 
             let mut lists = Lists::from_file(&ctx)?;
 
             lists.insert(list, &ctx)?;
             lists.write();
         }
-        Command::Highlight { buffer } => {
-            let ctx = Context::new(
-                app.input_fifo,
-                app.output_fifo,
-                app.session_name,
-                app.client_name,
-                app.timestamp,
-            )?;
-
+        Command::Highlight { ref buffer } => {
+            let ctx = Context::new(&app)?;
             let mut lists = Lists::from_file(&ctx)?;
 
-            lists.highlight(buffer, &ctx)?;
+            lists.highlight(&buffer, &ctx)?;
             lists.write();
         }
     }
@@ -133,7 +108,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn init(app: &App) {
-    let local_path = util::get_store_path(&app.session_name);
+    let local_path = util::get_store_path(&app.session);
 
     // Creates file and populates it with empty, but valid, data
     Lists::new(&local_path).expect("Could not create session store.");
@@ -144,7 +119,7 @@ fn init(app: &App) {
     let loli_cmd = format!(
         "set global loli_cmd '{} -s {}'",
         util::editor_escape(cmd),
-        app.session_name
+        app.session
     );
 
     let script: &str = include_str!("../rc/loli.kak");
