@@ -271,7 +271,9 @@ impl LocationList {
                     )
                 })
                 .join("\n"),
-        )
+        )?;
+
+        Ok(())
     }
 }
 
