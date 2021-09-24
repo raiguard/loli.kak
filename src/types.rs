@@ -51,7 +51,7 @@ impl Lists {
     }
 
     pub fn clear(&mut self, ctx: &Context) -> Result<(), Box<dyn Error>> {
-        if let Some(existing) = self.lists.get(&ctx.list_key) {
+        if let Some(existing) = self.lists.get_mut(&ctx.list_key) {
             existing.purge_highlighters(&ctx)?;
             self.lists.remove(&ctx.list_key);
         }
@@ -252,7 +252,7 @@ impl LocationList {
     }
 
     /// Removes all current highlighters for this list
-    fn purge_highlighters(&self, ctx: &Context) -> Result<(), Box<dyn Error>> {
+    fn purge_highlighters(&mut self, ctx: &Context) -> Result<(), Box<dyn Error>> {
         ctx.exec(
             self.active_buffers
                 .iter()
@@ -272,6 +272,8 @@ impl LocationList {
                 })
                 .join("\n"),
         )?;
+
+        self.options.clear();
 
         Ok(())
     }
