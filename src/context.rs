@@ -19,8 +19,8 @@ macro_rules! kak_print {
 pub struct Context {
     pub client: Option<String>,
     input_fifo: PathBuf,
-    output_fifo: PathBuf,
-    output_fifo_str: String,
+    pub output_fifo: PathBuf,
+    pub output_fifo_str: String,
     // session: String,
     pub store: PathBuf,
     pub list_key: String,

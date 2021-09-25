@@ -68,6 +68,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     match app.cmd {
         Command::Init => init(&app),
+
         Command::Clean => {
             fs::remove_file(&util::get_store_path(&app.session))?;
         }

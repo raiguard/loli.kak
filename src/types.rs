@@ -44,6 +44,7 @@ impl Lists {
         self.clear(&ctx)?;
 
         list.gen_ranges(&ctx)?;
+        list.highlight_all(&ctx)?;
 
         self.lists.insert(list.name.clone(), list);
 
@@ -141,9 +142,9 @@ impl LocationList {
 
         Ok(LocationList {
             active_buffers: vec![],
-            name: name.to_string(),
-            locations,
             index: 0,
+            locations,
+            name: name.to_string(),
             options: vec![],
         })
     }
@@ -247,6 +248,82 @@ impl LocationList {
         )?;
 
         self.options = options.keys().cloned().collect();
+
+        Ok(())
+    }
+
+    /*
+    fn global_highlight_open_buffers(files: &[String], buffers: &[String], list_key: &str) {
+        for (filename, stripped) in buffers
+            .iter()
+            .map(|bufname| (bufname, util::strip_an(&bufname)))
+            .filter(|(_, stripped)| files.contains(stripped))
+        {
+            println!(
+                "eval -save-regs a %{{
+                    exec '\"aZ'
+                    edit {0}
+                    add-highlighter -override buffer/ ranges loli_{1}_{2}_highlight
+                    add-highlighter -override buffer/ ranges loli_{1}_{2}_indices
+                    exec '\"az'
+                }}",
+                filename, list_key, stripped
+            )
+        }
+    }
+    */
+
+    /// Highlights all open buffers
+    fn highlight_all(&self, ctx: &Context) -> Result<(), Box<dyn Error>> {
+        let list_key = &self.name;
+
+        let buffers: Vec<String> = ctx
+            .exec(format!(
+                "echo -to-file {} %sh{{
+                    echo $kak_quoted_buflist
+                }}",
+                ctx.output_fifo_str
+            ))?
+            .map_or_else(
+                || "".to_string(),
+                |str| {
+                    // Remove the first and last characters
+                    let mut chars = str.chars();
+                    chars.next();
+                    chars.next_back();
+                    chars.as_str().to_string()
+                },
+            )
+            .split("\' \'")
+            .map(|str| str.to_string())
+            .collect();
+
+        if !buffers.is_empty() {
+            let mut files: Vec<String> = self
+                .locations
+                .iter()
+                .map(|location| util::strip_an(&location.filename))
+                .collect();
+
+            files.dedup();
+
+            for (filename, stripped) in buffers
+                .iter()
+                .map(|bufname| (bufname, util::strip_an(&bufname)))
+                .filter(|(_, stripped)| files.contains(stripped))
+            {
+                println!(
+                    "eval -save-regs a %{{
+                    exec '\"aZ'
+                    edit {0}
+                    add-highlighter -override buffer/ ranges loli_{1}_{2}_highlight
+                    add-highlighter -override buffer/ ranges loli_{1}_{2}_indices
+                    exec '\"az'
+                }}",
+                    filename, list_key, stripped
+                )
+            }
+        }
 
         Ok(())
     }
