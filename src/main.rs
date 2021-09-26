@@ -72,6 +72,9 @@ pub enum Command {
 
     /// Jumps to the next item in the location list
     Next,
+
+    /// Jumps to the previous item in the location list
+    Prev,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -138,6 +141,15 @@ fn main() -> Result<(), Box<dyn Error>> {
             let list = lists.get_mut(&ctx);
             if let Some(list) = list {
                 list.navigate(&ctx, list.index + 1);
+            }
+            lists.write();
+        }
+        Command::Prev => {
+            let ctx = Context::new(&app)?;
+            let mut lists = Lists::from_file(&ctx)?;
+            let list = lists.get_mut(&ctx);
+            if let Some(list) = list {
+                list.navigate(&ctx, list.index - 1);
             }
             lists.write();
         }

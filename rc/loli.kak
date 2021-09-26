@@ -115,3 +115,15 @@ define-command cnext %{
         $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo -t $kak_timestamp -c $kak_client next
     }
 }
+
+define-command gprev %{
+    evaluate-commands %sh{
+        $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo -t $kak_timestamp prev
+    }
+}
+
+define-command cprev %{
+    evaluate-commands %sh{
+        $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo -t $kak_timestamp -c $kak_client prev
+    }
+}
