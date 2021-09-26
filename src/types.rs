@@ -65,14 +65,13 @@ impl Lists {
         Ok(())
     }
 
-    pub fn highlight(&mut self, buffer: &String, ctx: &Context) -> Result<(), Box<dyn Error>> {
+    pub fn highlight(&mut self, ctx: &Context, buffer: &str) -> Result<(), Box<dyn Error>> {
         // Highlight the global list on the buffer level
         if let Some(list) = self.lists.get_mut(util::DEFAULT_NAME) {
             if list
                 .locations
                 .iter()
-                .map(|location| &location.filename)
-                .contains(&buffer)
+                .any(|location| location.filename == buffer)
             {
                 ctx.add_highlighters(&list.name, &buffer, true)?;
                 list.active_buffers.push(buffer.to_string());
@@ -85,8 +84,7 @@ impl Lists {
             if list
                 .locations
                 .iter()
-                .map(|location| &location.filename)
-                .contains(&buffer)
+                .any(|location| location.filename == buffer)
             {
                 ctx.add_highlighters(&list.name, &buffer, false)?;
                 list.active_buffers.push(buffer.to_string());

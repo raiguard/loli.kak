@@ -100,7 +100,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             let ctx = Context::new(&app)?;
             let mut lists = Lists::from_file(&ctx)?;
 
-            lists.highlight(&buffer, &ctx)?;
+            lists.highlight(&ctx, &buffer)?;
             lists.write();
         }
     }
