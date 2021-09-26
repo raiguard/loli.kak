@@ -77,11 +77,3 @@ define-command -params 1 cnew %{
         }" >> $kak_command_fifo
     }
 }
-
-# TEST
-
-define-command gtest %{
-    evaluate-commands %sh{
-        $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo -t $kak_timestamp test
-    }
-}
