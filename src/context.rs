@@ -50,6 +50,7 @@ impl Context {
         }
     }
 
+    /// Executes the given commands immediately, and returns the output
     pub fn exec(&self, mut commands: String) -> Result<Option<String>, Box<dyn Error>> {
         // Always write _something_ to the response fifo to ensure that it closes
         commands.push_str(&format!("\necho -to-file {} ''", self.output_fifo_str));
@@ -63,6 +64,11 @@ impl Context {
         } else {
             Ok(Some(response))
         }
+    }
+
+    /// Executes the given commands when the program is terminated
+    pub fn cmd(&self, commands: String) {
+        println!("{}", commands);
     }
 
     pub fn add_highlighters(
