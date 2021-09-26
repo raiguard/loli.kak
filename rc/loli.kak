@@ -55,6 +55,7 @@ define-command -params .. -file-completion cgrep %{
         rg --vimgrep --trim  "$@" | tr -d '\r' > ${output} 2>&1
 
         $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo -t $kak_timestamp -c $kak_client grep "${output}"
+        $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo -t $kak_timestamp -c $kak_client highlight "$kak_bufname"
     }
 }
 
@@ -72,6 +73,7 @@ define-command -params 1 cnew %{
     evaluate-commands %sh{
         echo "evaluate-commands %sh{
             $kak_opt_loli_cmd -i \$kak_command_fifo -o \$kak_response_fifo -t \$kak_timestamp -c $kak_client list \"\$kak_quoted_opt_$1\"
+            $kak_opt_loli_cmd -i \$kak_command_fifo -o \$kak_response_fifo -t \$kak_timestamp -c $kak_client highlight \"\$kak_bufname\"
         }" >> $kak_command_fifo
     }
 }
