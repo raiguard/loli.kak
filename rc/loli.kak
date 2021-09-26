@@ -77,3 +77,17 @@ define-command -params 1 cnew %{
         }" >> $kak_command_fifo
     }
 }
+
+# NAVIGATION
+
+define-command gfirst %{
+    evaluate-commands %sh{
+        $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo -t $kak_timestamp first
+    }
+}
+
+define-command cfirst %{
+    evaluate-commands %sh{
+        $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo -t $kak_timestamp -c $kak_client first
+    }
+}

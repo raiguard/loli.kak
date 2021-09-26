@@ -63,6 +63,9 @@ pub enum Command {
 
     /// Highlights the given buffer's location lists
     Highlight { buffer: String },
+
+    /// Jumps to the first item in the location list
+    First,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -104,6 +107,14 @@ fn main() -> Result<(), Box<dyn Error>> {
 
             lists.highlight(&ctx, &buffer)?;
             lists.write();
+        }
+        Command::First => {
+            let ctx = Context::new(&app)?;
+            let mut lists = Lists::from_file(&ctx)?;
+            let list = lists.get_mut(&ctx);
+            if let Some(list) = list {
+                list.navigate(&ctx, 0);
+            }
         }
     }
 
