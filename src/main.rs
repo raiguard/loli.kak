@@ -121,7 +121,24 @@ fn main() -> Result<(), Box<dyn Error>> {
             lists.write();
         }
         Command::Update { ref buffer } => {
-            todo!()
+            let ctx = Context::new(&app)?;
+            let mut lists = Lists::from_file(&ctx)?;
+
+            // Get all lists that have contents in this buffer
+            for (_, list) in lists.lists.iter().filter(|(_, list)| {
+                list.highlighters
+                    .iter()
+                    .any(|highlighter| *buffer == highlighter.filename)
+            }) {
+                let ranges = ctx.get_option(&format!(
+                    "loli_{}_{}_highlight",
+                    list.name,
+                    util::strip_an(&buffer)
+                ))?;
+                if let Some(ranges) = ranges {
+                    kak_print!(ranges);
+                }
+            }
         }
         Command::First => {
             let ctx = Context::new(&app)?;
