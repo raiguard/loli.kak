@@ -40,6 +40,22 @@ impl Lists {
         Ok(lists)
     }
 
+    pub fn get(&self, ctx: &Context) -> Option<&LocationList> {
+        let key = ctx
+            .client
+            .as_ref()
+            .map_or(util::DEFAULT_NAME, |client| &client);
+        self.lists.get(key)
+    }
+
+    pub fn get_mut(&mut self, ctx: &Context) -> Option<&mut LocationList> {
+        let key = ctx
+            .client
+            .as_ref()
+            .map_or(util::DEFAULT_NAME, |client| &client);
+        self.lists.get_mut(key)
+    }
+
     pub fn insert(&mut self, mut list: LocationList, ctx: &Context) -> Result<(), Box<dyn Error>> {
         // Clear data for previous entry, if there is one
         self.clear(&ctx)?;
@@ -108,7 +124,7 @@ impl Lists {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct LocationList {
     pub highlighters: HashSet<Highlighter>,
-    pub index: u32,
+    pub index: usize,
     pub locations: Vec<Location>,
     pub name: String,
 }
@@ -291,17 +307,25 @@ impl LocationList {
     /// Removes all current highlighters for this list
     fn purge_highlighters(&mut self) {
         println!(
-            "{}",
-            format!(
-                "evaluate-commands -save-regs a -draft %{{
+            "evaluate-commands -save-regs a -draft %{{
                 {}
             }}",
-                self.highlighters
-                    .iter()
-                    .map(|highlighter| highlighter.gen_removal(&self.name))
-                    .join("\n")
-            )
+            self.highlighters
+                .iter()
+                .map(|highlighter| highlighter.gen_removal(&self.name))
+                .join("\n")
         );
+    }
+
+    pub fn navigate(&mut self, ctx: &Context, index: usize) {
+        self.index = index;
+
+        if let Some(location) = self.locations.get(index) {
+            ctx.cmd(format!(
+                "edit {} {} {}",
+                location.filename, location.range.start.line, location.range.start.column,
+            ))
+        }
     }
 }
 
