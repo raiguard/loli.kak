@@ -44,7 +44,12 @@ impl Lists {
         self.clear(&ctx)?;
 
         list.gen_ranges(&ctx)?;
-        list.highlight_all(&ctx)?;
+
+        if list.name == util::DEFAULT_NAME {
+            list.highlight_all(&ctx)?;
+        } else if let Some(bufname) = ctx.get_value("bufname")? {
+            self.highlight(&ctx, &bufname)?;
+        }
 
         self.lists.insert(list.name.clone(), list);
 
