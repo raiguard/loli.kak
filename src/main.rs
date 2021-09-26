@@ -5,12 +5,14 @@ use std::path::PathBuf;
 use structopt::StructOpt;
 
 #[macro_use]
+
 mod context;
+mod location_list;
 mod types;
 mod util;
 
 use context::Context;
-use types::*;
+use location_list::{Lists, LocationList};
 
 #[derive(StructOpt)]
 #[structopt(
