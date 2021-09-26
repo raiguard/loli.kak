@@ -91,3 +91,15 @@ define-command cfirst %{
         $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo -t $kak_timestamp -c $kak_client first
     }
 }
+
+define-command glast %{
+    evaluate-commands %sh{
+        $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo -t $kak_timestamp last
+    }
+}
+
+define-command clast %{
+    evaluate-commands %sh{
+        $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo -t $kak_timestamp -c $kak_client last
+    }
+}
