@@ -307,8 +307,10 @@ impl LocationList {
     /// Removes all current highlighters for this list
     fn purge_highlighters(&mut self, ctx: &Context) {
         ctx.cmd(format!(
-            "evaluate-commands -save-regs a -draft %{{
+            "evaluate-commands -save-regs a %{{
+                execute-keys '\"aZ'
                 {}
+                execute-keys '\"az'
             }}",
             self.highlighters
                 .iter()

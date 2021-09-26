@@ -20,14 +20,10 @@ impl Highlighter {
     }
     pub fn gen_removal(&self, list_name: &str) -> String {
         format!(
-            "execute-keys '\"aZ'
-            {0}
+            "edit {0}
             remove-highlighter {1}/ranges_loli_{2}_{3}_highlight
             remove-highlighter {1}/ranges_loli_{2}_{3}_indices",
-            match self.scope {
-                HighlighterScope::Buffer => "".to_string(),
-                HighlighterScope::Window => format!("edit {}", self.filename),
-            },
+            self.filename,
             self.scope,
             list_name,
             util::strip_an(&self.filename)
