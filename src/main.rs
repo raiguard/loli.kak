@@ -130,14 +130,15 @@ fn main() -> Result<(), Box<dyn Error>> {
                     .iter()
                     .any(|highlighter| *buffer == highlighter.filename)
             }) {
-                let ranges = ctx.get_option(&format!(
-                    "loli_{}_{}_highlight",
-                    list.name,
-                    util::strip_an(&buffer)
-                ))?;
-                if let Some(ranges) = ranges {
-                    kak_print!(ranges);
-                }
+                kak_print!("loli_{}_{}_highlight", list.name, util::strip_an(&buffer));
+                // let ranges = ctx.get_option(&format!(
+                //     "loli_{}_{}_highlight",
+                //     list.name,
+                //     util::strip_an(&buffer)
+                // ))?;
+                // if let Some(ranges) = ranges {
+                //     kak_print!(ranges);
+                // }
             }
         }
         Command::First => {
