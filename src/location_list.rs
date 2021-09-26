@@ -246,7 +246,7 @@ impl LocationList {
             indices.push(format!("{}|{}", location.range, i));
         }
 
-        ctx.exec(
+        ctx.cmd(
             options
                 .iter()
                 .map(|(name, members)| {
@@ -261,7 +261,7 @@ impl LocationList {
                     )
                 })
                 .join("\n"),
-        )?;
+        );
 
         Ok(())
     }

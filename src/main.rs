@@ -1,6 +1,11 @@
+use directories::BaseDirs;
+use log::LevelFilter;
+use simplelog::WriteLogger;
 use std::env;
 use std::error::Error;
 use std::fs;
+use std::fs::File;
+use std::fs::OpenOptions;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -81,8 +86,12 @@ pub enum Command {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
+    create_logger()?;
+
+    // Parse arguments
     let app = App::from_args();
 
+    // Logic
     match app.cmd {
         Command::Init => init(&app),
 
@@ -130,15 +139,14 @@ fn main() -> Result<(), Box<dyn Error>> {
                     .iter()
                     .any(|highlighter| *buffer == highlighter.filename)
             }) {
-                kak_print!("loli_{}_{}_highlight", list.name, util::strip_an(&buffer));
-                // let ranges = ctx.get_option(&format!(
-                //     "loli_{}_{}_highlight",
-                //     list.name,
-                //     util::strip_an(&buffer)
-                // ))?;
-                // if let Some(ranges) = ranges {
-                //     kak_print!(ranges);
-                // }
+                let ranges = ctx.get_option(&format!(
+                    "loli_{}_{}_indices",
+                    list.name,
+                    util::strip_an(&buffer)
+                ))?;
+                if let Some(ranges) = ranges {
+                    log::debug!("{}", ranges);
+                }
             }
         }
         Command::First => {
@@ -178,6 +186,25 @@ fn main() -> Result<(), Box<dyn Error>> {
             lists.write();
         }
     }
+
+    Ok(())
+}
+
+fn create_logger() -> Result<(), Box<dyn Error>> {
+    // Init logger
+    let mut path = BaseDirs::new().unwrap().home_dir().to_path_buf();
+    path.push("kak-hang-test.log");
+
+    // Create file if it doesn't already exist
+    if !path.exists() {
+        File::create(&path)?;
+    }
+
+    WriteLogger::init(
+        LevelFilter::Trace,
+        simplelog::Config::default(),
+        OpenOptions::new().append(true).open(&path)?,
+    )?;
 
     Ok(())
 }

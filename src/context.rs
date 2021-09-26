@@ -52,8 +52,8 @@ impl Context {
 
     /// Executes the given commands immediately, and returns the output
     pub fn exec(&self, mut commands: String) -> Result<Option<String>, Box<dyn Error>> {
-        // Always write _something_ to the response fifo to ensure that it closes
-        commands.push_str(&format!("\necho -to-file {} ''", self.output_fifo_str));
+        // // Always write _something_ to the response fifo to ensure that it closes
+        // commands.push_str(&format!("\necho -to-file {} ''", self.output_fifo_str));
         fs::write(&self.input_fifo, commands)?;
 
         // Wait for kak to be done by reading the response fifo
@@ -79,7 +79,8 @@ impl Context {
         is_global: bool,
     ) -> Result<(), Box<dyn Error>> {
         ctx.cmd(format!(
-            "add-highlighter -override {}/ ranges loli_{}_{}_highlight",
+            "add-highlighter -override {0}/ ranges loli_{1}_{2}_highlight
+            add-highlighter -override {0}/ ranges loli_{1}_{2}_indices",
             if is_global { "buffer" } else { "window" },
             key,
             util::strip_an(&buffer)
@@ -110,6 +111,15 @@ impl Context {
         self.exec(format!(
             "echo -to-file {} %sh{{
                     echo $kak_quoted_{}
+                }}",
+            self.output_fifo_str, name
+        ))
+    }
+
+    pub fn get_option(&self, name: &str) -> Result<Option<String>, Box<dyn Error>> {
+        self.exec(format!(
+            "echo -to-file {} %sh{{
+                    echo $kak_quoted_opt_{}
                 }}",
             self.output_fifo_str, name
         ))
