@@ -318,6 +318,8 @@ impl LocationList {
     }
 
     pub fn navigate(&mut self, ctx: &Context, index: usize) {
+        // TODO: Show an error in kak when trying to go past the end of a list
+        let index = index.clamp(0, self.locations.len() - 1);
         self.index = index;
 
         if let Some(location) = self.locations.get(index) {

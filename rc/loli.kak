@@ -103,3 +103,15 @@ define-command clast %{
         $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo -t $kak_timestamp -c $kak_client last
     }
 }
+
+define-command gnext %{
+    evaluate-commands %sh{
+        $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo -t $kak_timestamp next
+    }
+}
+
+define-command cnext %{
+    evaluate-commands %sh{
+        $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo -t $kak_timestamp -c $kak_client next
+    }
+}
