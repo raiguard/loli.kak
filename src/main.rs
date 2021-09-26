@@ -64,6 +64,9 @@ pub enum Command {
     /// Highlights the given buffer's location lists
     Highlight { buffer: String },
 
+    /// Updates the buffer's range-specs based on changes made
+    Update { buffer: String },
+
     /// Jumps to the first item in the location list
     First,
 
@@ -116,6 +119,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 
             lists.highlight(&ctx, &buffer)?;
             lists.write();
+        }
+        Command::Update { ref buffer } => {
+            todo!()
         }
         Command::First => {
             let ctx = Context::new(&app)?;

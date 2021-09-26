@@ -16,6 +16,22 @@ hook global KakEnd .* %{
     evaluate-commands %sh{ $kak_opt_loli_cmd clean }
 }
 
+# Update ranges any time a buffer changes
+declare-option -hidden int loli_prev_timestamp 0
+hook -group loli-buf-change global NormalIdle .* %{
+    evaluate-commands %sh{
+        if [ "$kak_timestamp" -gt "$kak_opt_loli_prev_timestamp" ]; then
+            printf 'trigger-user-hook LoliBufChange\n'
+            printf 'set-option buffer loli_prev_timestamp %s\n' "$kak_timestamp"
+        fi
+    }
+}
+hook global User LoliBufChange %{
+    evaluate-commands %sh{
+        $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo -t $kak_timestamp update "$kak_bufname"
+    }
+}
+
 # CLEAR
 
 define-command gclear %{
