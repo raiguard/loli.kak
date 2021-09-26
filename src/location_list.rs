@@ -212,7 +212,7 @@ impl LocationList {
         })
     }
 
-    // For now, just generate highlighter ranges so we can see it in action
+    /// Generates the range-specs used for highlighting and tracking
     pub fn gen_ranges(&mut self, ctx: &Context) -> Result<(), Box<dyn Error>> {
         let mut options = HashMap::new();
 
