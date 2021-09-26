@@ -51,10 +51,9 @@ impl Context {
     }
 
     pub fn exec(&self, mut commands: String) -> Result<Option<String>, Box<dyn Error>> {
+        // Always write _something_ to the response fifo to ensure that it closes
         commands.push_str(&format!("\necho -to-file {} ''", self.output_fifo_str));
-        if !commands.is_empty() {
-            fs::write(&self.input_fifo, commands)?;
-        }
+        fs::write(&self.input_fifo, commands)?;
 
         // Wait for kak to be done by reading the response fifo
         let response = fs::read_to_string(&self.output_fifo)?;
