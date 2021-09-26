@@ -71,19 +71,17 @@ impl Context {
         buffer: &str,
         is_global: bool,
     ) -> Result<(), Box<dyn Error>> {
-        let command = format!(
-            "add-highlighter -override {}/ ranges loli_{}_{}_highlight",
-            if is_global { "buffer" } else { "window" },
-            key,
-            util::strip_an(&buffer)
+        println!(
+            "{}",
+            format!(
+                "add-highlighter -override {}/ ranges loli_{}_{}_highlight",
+                if is_global { "buffer" } else { "window" },
+                key,
+                util::strip_an(&buffer)
+            )
         );
 
-        kak_print!(&command);
-
-        println!("{}", command);
-
         Ok(())
-        // self.exec(command)
     }
 
     pub fn get_str_list(&self, name: &str) -> Result<Vec<String>, Box<dyn Error>> {

@@ -290,19 +290,18 @@ impl LocationList {
 
     /// Removes all current highlighters for this list
     fn purge_highlighters(&mut self) {
-        let cmd = format!(
-            "evaluate-commands -save-regs a -draft %{{
+        println!(
+            "{}",
+            format!(
+                "evaluate-commands -save-regs a -draft %{{
                 {}
             }}",
-            self.highlighters
-                .iter()
-                .map(|highlighter| highlighter.gen_removal(&self.name))
-                .join("\n")
+                self.highlighters
+                    .iter()
+                    .map(|highlighter| highlighter.gen_removal(&self.name))
+                    .join("\n")
+            )
         );
-
-        kak_print!("{}", cmd);
-
-        println!("{}", cmd);
     }
 }
 
