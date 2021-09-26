@@ -3,6 +3,7 @@ use once_cell::sync::OnceCell;
 use regex::Regex;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::error::Error;
 use std::fmt::Display;
 use std::fs;
@@ -56,7 +57,7 @@ impl Lists {
 
     pub fn clear(&mut self, ctx: &Context) -> Result<(), Box<dyn Error>> {
         if let Some(existing) = self.lists.get_mut(&ctx.list_key) {
-            existing.purge_highlighters(&ctx)?;
+            existing.purge_highlighters();
             self.lists.remove(&ctx.list_key);
         }
 
@@ -72,7 +73,8 @@ impl Lists {
                 .any(|location| location.filename == buffer)
             {
                 ctx.add_highlighters(&list.name, &buffer, true)?;
-                list.active_buffers.push(buffer.to_string());
+                list.highlighters
+                    .insert(Highlighter::new(&buffer, HighlighterScope::Buffer)?);
             };
         };
 
@@ -85,7 +87,8 @@ impl Lists {
                 .any(|location| location.filename == buffer)
             {
                 ctx.add_highlighters(&list.name, &buffer, false)?;
-                list.active_buffers.push(buffer.to_string());
+                list.highlighters
+                    .insert(Highlighter::new(&buffer, HighlighterScope::Window)?);
             };
         };
 
@@ -104,11 +107,10 @@ impl Lists {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct LocationList {
-    pub active_buffers: Vec<String>,
+    pub highlighters: HashSet<Highlighter>,
     pub index: u32,
     pub locations: Vec<Location>,
     pub name: String,
-    pub options: Vec<String>,
 }
 
 impl LocationList {
@@ -142,11 +144,10 @@ impl LocationList {
         }
 
         Ok(LocationList {
-            active_buffers: vec![],
             index: 0,
             locations,
             name: name.to_string(),
-            options: vec![],
+            highlighters: HashSet::new(),
         })
     }
 
@@ -204,11 +205,10 @@ impl LocationList {
         }
 
         Ok(LocationList {
-            active_buffers: vec![],
+            highlighters: HashSet::new(),
             index: 0,
             locations,
             name: name.to_string(),
-            options: vec![],
         })
     }
 
@@ -247,13 +247,11 @@ impl LocationList {
                 .join("\n"),
         )?;
 
-        self.options = options.keys().cloned().collect();
-
         Ok(())
     }
 
     /// Highlights the global list in all buffers
-    fn highlight_all(&self, ctx: &Context) -> Result<(), Box<dyn Error>> {
+    fn highlight_all(&mut self, ctx: &Context) -> Result<(), Box<dyn Error>> {
         // Only do this if this is the global list
         if self.name != util::DEFAULT_NAME {
             return Ok(());
@@ -273,7 +271,7 @@ impl LocationList {
             .filter(|(_, stripped)| files.contains(stripped))
         {
             println!(
-                "eval -save-regs a %{{
+                "eval -save-regs a -draft %{{
                     exec '\"aZ'
                     edit {0}
                     add-highlighter -override buffer/ ranges loli_{1}_{2}_highlight
@@ -281,37 +279,30 @@ impl LocationList {
                     exec '\"az'
                 }}",
                 filename, self.name, stripped
-            )
+            );
+
+            self.highlighters
+                .insert(Highlighter::new(&filename, HighlighterScope::Buffer)?);
         }
 
         Ok(())
     }
 
     /// Removes all current highlighters for this list
-    fn purge_highlighters(&mut self, ctx: &Context) -> Result<(), Box<dyn Error>> {
-        ctx.exec(
-            self.active_buffers
+    fn purge_highlighters(&mut self) {
+        let cmd = format!(
+            "evaluate-commands -save-regs a -draft %{{
+                {}
+            }}",
+            self.highlighters
                 .iter()
-                .map(|bufname| {
-                    format!(
-                        "eval -save-regs a %{{
-                        execute-keys '\"aZ'
-                        edit {0}
-                        remove-highlighter buffer/ranges_loli_{1}_{2}_highlight
-                        remove-highlighter buffer/ranges_loli_{1}_{2}_indices
-                        execute-keys '\"az'
-                    }}",
-                        bufname,
-                        self.name,
-                        util::strip_an(bufname)
-                    )
-                })
-                .join("\n"),
-        )?;
+                .map(|highlighter| highlighter.gen_removal(&self.name))
+                .join("\n")
+        );
 
-        self.options.clear();
+        kak_print!("{}", cmd);
 
-        Ok(())
+        println!("{}", cmd);
     }
 }
 
@@ -323,6 +314,63 @@ pub enum LocationListErr {
     InvalidRange,
     #[error("Invalid grep format")]
     InvalidGrepFmt,
+}
+
+// format!(
+//     "remove-highlighter {0}/loli_{1}_{2}_highlight
+//     remove-highlighter {0}/loli_{1}_{2}_indices",
+//     highlighter.scope,
+//     self.name,
+//     util::strip_an(&highlighter.filename)
+// )
+
+#[derive(Eq, Debug, Deserialize, Hash, PartialEq, Serialize)]
+pub struct Highlighter {
+    pub filename: String,
+    pub scope: HighlighterScope,
+}
+
+impl Highlighter {
+    pub fn new(filename: &str, scope: HighlighterScope) -> Result<Self, Box<dyn Error>> {
+        Ok(Self {
+            filename: filename.to_string(),
+            scope,
+        })
+    }
+    pub fn gen_removal(&self, list_name: &str) -> String {
+        format!(
+            "execute-keys '\"aZ'
+            {0}
+            remove-highlighter {1}/ranges_loli_{2}_{3}_highlight
+            remove-highlighter {1}/ranges_loli_{2}_{3}_indices",
+            match self.scope {
+                HighlighterScope::Buffer => "".to_string(),
+                HighlighterScope::Window => format!("edit {}", self.filename),
+            },
+            self.scope,
+            list_name,
+            util::strip_an(&self.filename)
+        )
+    }
+}
+
+#[derive(Eq, Debug, Deserialize, Hash, Serialize, PartialEq)]
+pub enum HighlighterScope {
+    Buffer,
+    Window,
+}
+
+impl Display for HighlighterScope {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Buffer => "buffer",
+                Self::Window => "window",
+            }
+        )
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
