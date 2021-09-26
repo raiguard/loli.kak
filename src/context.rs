@@ -9,7 +9,7 @@ use crate::App;
 #[allow(unused)]
 macro_rules! kak_print {
     ($literal:expr) => {
-        println!("echo -debug '{}'", $literal)
+        println!("echo -debug '{}'", $crate::util::editor_escape(&$literal))
     };
     ($template:expr, $($arg:tt)*) => ({
         println!("echo -debug '{}'", $crate::util::editor_escape(&format!($template, $($arg)*)));
