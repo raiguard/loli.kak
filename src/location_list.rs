@@ -73,7 +73,7 @@ impl Lists {
 
     pub fn clear(&mut self, ctx: &Context) -> Result<(), Box<dyn Error>> {
         if let Some(existing) = self.lists.get_mut(&ctx.list_key) {
-            existing.purge_highlighters();
+            existing.purge_highlighters(&ctx);
             self.lists.remove(&ctx.list_key);
         }
 
@@ -88,7 +88,7 @@ impl Lists {
                 .iter()
                 .any(|location| location.filename == buffer)
             {
-                ctx.add_highlighters(&list.name, &buffer, true)?;
+                ctx.add_highlighters(&ctx, &list.name, &buffer, true)?;
                 list.highlighters
                     .insert(Highlighter::new(&buffer, HighlighterScope::Buffer)?);
             };
@@ -102,7 +102,7 @@ impl Lists {
                 .iter()
                 .any(|location| location.filename == buffer)
             {
-                ctx.add_highlighters(&list.name, &buffer, false)?;
+                ctx.add_highlighters(&ctx, &list.name, &buffer, false)?;
                 list.highlighters
                     .insert(Highlighter::new(&buffer, HighlighterScope::Window)?);
             };
@@ -286,7 +286,7 @@ impl LocationList {
             .map(|bufname| (bufname, util::strip_an(&bufname)))
             .filter(|(_, stripped)| files.contains(stripped))
         {
-            println!(
+            ctx.cmd(format!(
                 "eval -save-regs a -draft %{{
                     exec '\"aZ'
                     edit {0}
@@ -295,7 +295,7 @@ impl LocationList {
                     exec '\"az'
                 }}",
                 filename, self.name, stripped
-            );
+            ));
 
             self.highlighters
                 .insert(Highlighter::new(&filename, HighlighterScope::Buffer)?);
@@ -305,8 +305,8 @@ impl LocationList {
     }
 
     /// Removes all current highlighters for this list
-    fn purge_highlighters(&mut self) {
-        println!(
+    fn purge_highlighters(&mut self, ctx: &Context) {
+        ctx.cmd(format!(
             "evaluate-commands -save-regs a -draft %{{
                 {}
             }}",
@@ -314,7 +314,7 @@ impl LocationList {
                 .iter()
                 .map(|highlighter| highlighter.gen_removal(&self.name))
                 .join("\n")
-        );
+        ));
     }
 
     pub fn navigate(&mut self, ctx: &Context, index: usize) {
@@ -361,7 +361,5 @@ mod tests {
         let list_str = list.iter().join(" ");
 
         let list = LocationList::from_str_list("foo", &list_str).unwrap();
-
-        // println!("{:#?}", list);
     }
 }

@@ -73,19 +73,17 @@ impl Context {
 
     pub fn add_highlighters(
         &self,
+        ctx: &Context,
         key: &str,
         buffer: &str,
         is_global: bool,
     ) -> Result<(), Box<dyn Error>> {
-        println!(
-            "{}",
-            format!(
-                "add-highlighter -override {}/ ranges loli_{}_{}_highlight",
-                if is_global { "buffer" } else { "window" },
-                key,
-                util::strip_an(&buffer)
-            )
-        );
+        ctx.cmd(format!(
+            "add-highlighter -override {}/ ranges loli_{}_{}_highlight",
+            if is_global { "buffer" } else { "window" },
+            key,
+            util::strip_an(&buffer)
+        ));
 
         Ok(())
     }
