@@ -1,4 +1,5 @@
 use directories::BaseDirs;
+use itertools::Itertools;
 use log::LevelFilter;
 use simplelog::WriteLogger;
 use std::env;
@@ -83,6 +84,9 @@ pub enum Command {
 
     /// Jumps to the previous item in the location list
     Prev,
+
+    /// Opens the location list in a special buffer
+    Open,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -184,6 +188,39 @@ fn main() -> Result<(), Box<dyn Error>> {
                 list.navigate(&ctx, list.index - 1);
             }
             lists.write();
+        }
+        #[allow(unstable_name_collisions)]
+        Command::Open => {
+            let ctx = Context::new(&app)?;
+            let lists = Lists::from_file(&ctx)?;
+            if let Some(list) = lists.get(&ctx) {
+                let output = list
+                    .locations
+                    .iter()
+                    .map(|location| {
+                        format!(
+                            "{}:{}:{} | {}",
+                            location.filename,
+                            location.range.start.line,
+                            location.range.start.column,
+                            location.preview
+                        )
+                    })
+                    .intersperse("\n".to_string())
+                    .collect::<String>();
+                ctx.cmd(format!(
+                    "evaluate-commands -save-regs '\"' %@
+                        edit! -scratch *{}_locations*
+                        set-register '\"' '{}'
+                        execute-keys Pgg
+                        set-option buffer filetype loli
+                        set-option buffer readonly true
+                    @",
+                    list.name,
+                    util::editor_escape(&output),
+                ));
+                log::debug!("{}", output);
+            }
         }
     }
 
