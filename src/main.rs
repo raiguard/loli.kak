@@ -209,7 +209,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                     .intersperse("\n".to_string())
                     .collect::<String>();
                 ctx.cmd(format!(
-                    "evaluate-commands -save-regs '\"' %@
+                    "trigger-user-hook loli_open
+                    evaluate-commands -save-regs '\"' -try-client %opt{{toolsclient}} %@
                         edit! -scratch *{}_locations*
                         set-register '\"' '{}'
                         execute-keys Pgg
