@@ -211,13 +211,18 @@ fn main() -> Result<(), Box<dyn Error>> {
 
                 ctx.cmd(format!(
                     "evaluate-commands -save-regs '\"' -try-client %opt{{toolsclient}} %@
-                        edit! -scratch *{}_locations*
+                        edit! -scratch '*{}_locations*'
                         set-register '\"' '{}'
                         execute-keys Pgg
                         set-option buffer filetype loli
                         set-option buffer readonly true
+                        try %{{ focus %opt{{toolsclient}} }}
                     @",
-                    list.name,
+                    if list.name == util::DEFAULT_NAME {
+                        "global"
+                    } else {
+                        &list.name
+                    },
                     util::editor_escape(&output),
                 ));
                 log::debug!("{}", output);
