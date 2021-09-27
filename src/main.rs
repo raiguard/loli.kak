@@ -209,14 +209,15 @@ fn main() -> Result<(), Box<dyn Error>> {
                     .intersperse("\n".to_string())
                     .collect::<String>();
                 ctx.cmd(format!(
-                    "trigger-user-hook loli_open
+                    "trigger-user-hook loli_pre_open
                     evaluate-commands -save-regs '\"' -try-client %opt{{toolsclient}} %@
                         edit! -scratch *{}_locations*
                         set-register '\"' '{}'
                         execute-keys Pgg
                         set-option buffer filetype loli
                         set-option buffer readonly true
-                    @",
+                    @
+                    trigger-user-hook loli_post_open",
                     list.name,
                     util::editor_escape(&output),
                 ));
