@@ -31,14 +31,3 @@ pub fn get_store_path(session: &str) -> PathBuf {
 }
 
 pub const DEFAULT_NAME: &str = "LOLIGLOBAL";
-
-// /// Adds highlight and indices highlighters for the given option
-// pub fn add_highlighters(key: &str, buffer: &str, is_client: bool) {
-//     println!(
-//         "add-highlighter -override {0}/ ranges loli_{1}_{2}_highlight
-//         add-highlighter -override {0}/ ranges loli_{1}_{2}_indices",
-//         if is_client { "window" } else { "buffer" },
-//         key,
-//         strip_an(&buffer)
-//     )
-// }
