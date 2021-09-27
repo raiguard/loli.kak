@@ -1,6 +1,6 @@
-decl str loli_cmd
+declare-option str loli_cmd
 # FIXME: This is temporary
-face global loli_highlight "default+r"
+set-face global loli_highlight "default+r"
 
 # HOOKS
 
