@@ -50,8 +50,9 @@ All command starting with `g` will use the global list, and `c` will use the cli
 
 - `(g|c)grep` - Run `ripgrep` on your project or the specified file(s), and pipe the results into a location list.
 - `(g|c)new` - Create a location list from a `str-list` option.
+- `(g|c)clear` - Clear the location list, removing the highlighters.
 - `(g|c)first` - Jump to the first location in the list.
-- `(g|c)last` - Jump to the first location in the list.
+- `(g|c)last` - Jump to the last location in the list.
 - `(g|c)next` - Jump to the next location in the list.
 - `(g|c)prev` - Jump to the previous location in the list.
 - `(g|c)open` - Open all of the locations in the toolsclient (currently has no other functions)
