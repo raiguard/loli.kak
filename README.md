@@ -46,6 +46,12 @@ This will add the appropriate hooks and commands to your kakoune session.
 
 ## Usage
 
-Right now, the `lggrep` and `lcgrep` commands are available. Running one of them and providing a search query (regex) will highlight all matches.
+All command starting with `g` will use the global list, and `c` will use the client-specific list
 
-`lggrep` adds to the "global list" which means matches will highlight in all clients. `lcgrep` will add to the "client list" and matches will only be highlighted in the client it was called from.
+- `(g|c)grep` - Run `ripgrep` on your project or the specified file(s), and pipe the results into a location list.
+- `(g|c)new` - Create a location list from a `str-list` option.
+- `(g|c)first` - Jump to the first location in the list.
+- `(g|c)last` - Jump to the first location in the list.
+- `(g|c)next` - Jump to the next location in the list.
+- `(g|c)prev` - Jump to the previous location in the list.
+- `(g|c)open` - Open all of the locations in the toolsclient (currently has no other functions)
