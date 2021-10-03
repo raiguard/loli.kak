@@ -102,7 +102,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Logic
     match app.cmd {
         Command::Init => init(&app),
-
         Command::Clean => {
             fs::remove_file(&util::get_store_path(&app.session))?;
         }
@@ -137,36 +136,46 @@ fn main() -> Result<(), Box<dyn Error>> {
             lists.highlight(&ctx, &buffer)?;
             lists.write();
         }
-
         Command::Update { ref buffer } => {
             let ctx = Context::new(&app)?;
             let mut lists = Lists::from_file(&ctx)?;
 
             // Get all lists that have contents in this buffer
-            for (_, list) in lists.lists.iter().filter(|(_, list)| {
+            for (_, list) in lists.lists.iter_mut().filter(|(_, list)| {
                 list.highlighters
                     .iter()
                     .any(|highlighter| *buffer == highlighter.filename)
             }) {
                 let src_list = ctx.get_str_list_option(&format!(
-                    "loli_{}_{}",
+                    "loli_{}_{}_indices",
                     list.name,
                     util::strip_an(&buffer)
                 ))?;
-                let timestamp: usize = src_list.get(0).unwrap_or(&"0".to_string()).parse()?;
-                let locations: Result<Vec<KakouneRange>, LocationListErr> = src_list
+
+                // let timestamp: usize = src_list.get(0).unwrap_or(&"0".to_string()).parse()?;
+
+                let locations: Result<Vec<(usize, KakouneRange)>, LocationListErr> = src_list
                     .iter()
                     .skip(1)
                     .map(|range| {
-                        let (range, _) =
+                        let (range, index) =
                             range.split_once('|').ok_or(LocationListErr::InvalidRange)?;
-                        KakouneRange::from_str(range)
+                        let range = KakouneRange::from_str(range)?;
+                        let index = index.parse().map_err(|_| LocationListErr::InvalidRange)?;
+
+                        Ok((index, range))
                     })
                     .collect();
                 let locations = locations?;
 
-                log::debug!("\n{}\n{:#?}", timestamp, locations);
+                for (index, range) in locations {
+                    if let Some(stored_location) = list.locations.get_mut(index) {
+                        stored_location.range = range;
+                    }
+                }
             }
+
+            lists.write();
         }
         Command::First => {
             let ctx = Context::new(&app)?;
