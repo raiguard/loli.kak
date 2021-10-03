@@ -21,8 +21,9 @@ impl Highlighter {
     }
     pub fn gen_removal(&self, list_name: &str) -> String {
         format!(
-            "edit {}
-            remove-highlighter {}/ranges_loli_{}_{}",
+            "edit {0}
+            remove-highlighter {1}/ranges_loli_{2}_{3}_highlight
+            remove-highlighter {1}/ranges_loli_{2}_{3}_indices",
             self.filename,
             self.scope,
             list_name,

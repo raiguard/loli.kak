@@ -79,7 +79,8 @@ impl Context {
         is_global: bool,
     ) -> Result<(), Box<dyn Error>> {
         ctx.cmd(format!(
-            "add-highlighter -override {}/ ranges loli_{}_{}",
+            "add-highlighter -override {0}/ ranges loli_{1}_{2}_highlight
+            add-highlighter -override {0}/ ranges loli_{1}_{2}_indices",
             if is_global { "buffer" } else { "window" },
             key,
             util::strip_an(&buffer)

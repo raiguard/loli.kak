@@ -233,11 +233,18 @@ impl LocationList {
     pub fn gen_ranges(&mut self, ctx: &Context) -> Result<(), Box<dyn Error>> {
         let mut options = HashMap::new();
 
-        for location in self.locations.iter() {
+        for (i, location) in self.locations.iter().enumerate() {
             let filename = util::strip_an(&location.filename);
 
-            let highlights = options.entry(filename.clone()).or_insert_with(Vec::new);
+            let highlights = options
+                .entry(filename.clone() + "_highlight")
+                .or_insert_with(Vec::new);
             highlights.push(format!("{}|{}", location.range, "loli_highlight"));
+
+            let indices = options
+                .entry(filename.clone() + "_indices")
+                .or_insert_with(Vec::new);
+            indices.push(format!("{}|{}", location.range, i));
         }
 
         ctx.cmd(
@@ -283,8 +290,9 @@ impl LocationList {
             ctx.cmd(format!(
                 "eval -save-regs a -draft %{{
                     exec '\"aZ'
-                    edit {}
-                    add-highlighter -override buffer/ ranges loli_{}_{}
+                    edit {0}
+                    add-highlighter -override buffer/ ranges loli_{1}_{2}_highlight
+                    add-highlighter -override buffer/ ranges loli_{1}_{2}_indices
                     exec '\"az'
                 }}",
                 filename, self.name, stripped
