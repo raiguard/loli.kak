@@ -51,7 +51,7 @@ impl Context {
     }
 
     /// Executes the given commands immediately, and returns the output
-    pub fn exec(&self, mut commands: &str) -> Result<Option<String>, Box<dyn Error>> {
+    pub fn exec(&self, commands: &str) -> Result<Option<String>, Box<dyn Error>> {
         // // Always write _something_ to the response fifo to ensure that it closes
         // commands.push_str(&format!("\necho -to-file {} ''", self.output_fifo_str));
         fs::write(&self.input_fifo, commands)?;
