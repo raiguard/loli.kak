@@ -305,9 +305,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn create_logger() -> Result<(), Box<dyn Error>> {
-    // Init logger
-    let mut path = BaseDirs::new().unwrap().home_dir().to_path_buf();
-    path.push("kak-loli-debug.log");
+    let path = PathBuf::from_str("/tmp/kak-loli.log").unwrap();
 
     // Create file if it doesn't already exist
     if !path.exists() {
