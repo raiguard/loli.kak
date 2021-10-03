@@ -8,6 +8,7 @@ use std::fs;
 use std::fs::File;
 use std::fs::OpenOptions;
 use std::path::PathBuf;
+use std::str::FromStr;
 use structopt::StructOpt;
 
 #[macro_use]
@@ -19,6 +20,9 @@ mod util;
 
 use context::Context;
 use location_list::{Lists, LocationList};
+
+use crate::location_list::LocationListErr;
+use crate::types::*;
 
 #[derive(StructOpt)]
 #[structopt(
@@ -133,6 +137,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             lists.highlight(&ctx, &buffer)?;
             lists.write();
         }
+
         Command::Update { ref buffer } => {
             let ctx = Context::new(&app)?;
             let mut lists = Lists::from_file(&ctx)?;
@@ -143,14 +148,24 @@ fn main() -> Result<(), Box<dyn Error>> {
                     .iter()
                     .any(|highlighter| *buffer == highlighter.filename)
             }) {
-                let ranges = ctx.get_option(&format!(
-                    "loli_{}_{}_indices",
+                let src_list = ctx.get_str_list_option(&format!(
+                    "loli_{}_{}",
                     list.name,
                     util::strip_an(&buffer)
                 ))?;
-                if let Some(ranges) = ranges {
-                    log::debug!("{}", ranges);
-                }
+                let timestamp: usize = src_list.get(0).unwrap_or(&"0".to_string()).parse()?;
+                let locations: Result<Vec<KakouneRange>, LocationListErr> = src_list
+                    .iter()
+                    .skip(1)
+                    .map(|range| {
+                        let (range, _) =
+                            range.split_once('|').ok_or(LocationListErr::InvalidRange)?;
+                        KakouneRange::from_str(range)
+                    })
+                    .collect();
+                let locations = locations?;
+
+                log::debug!("\n{}\n{:#?}", timestamp, locations);
             }
         }
         Command::First => {
@@ -239,7 +254,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 fn create_logger() -> Result<(), Box<dyn Error>> {
     // Init logger
     let mut path = BaseDirs::new().unwrap().home_dir().to_path_buf();
-    path.push("kak-hang-test.log");
+    path.push("kak-loli-debug.log");
 
     // Create file if it doesn't already exist
     if !path.exists() {

@@ -123,4 +123,22 @@ impl Context {
             self.output_fifo_str, name
         ))
     }
+
+    pub fn get_str_list_option(&self, name: &str) -> Result<Vec<String>, Box<dyn Error>> {
+        Ok(self
+            .get_option(&name)?
+            .map_or_else(
+                || "".to_string(),
+                |str| {
+                    // Remove the first and last characters
+                    let mut chars = str.chars();
+                    chars.next();
+                    chars.next_back();
+                    chars.as_str().to_string()
+                },
+            )
+            .split("\' \'")
+            .map(|str| str.to_string())
+            .collect())
+    }
 }
