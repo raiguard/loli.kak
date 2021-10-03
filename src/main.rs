@@ -2,6 +2,7 @@ use directories::BaseDirs;
 use itertools::Itertools;
 use log::LevelFilter;
 use simplelog::WriteLogger;
+use std::convert::TryFrom;
 use std::env;
 use std::error::Error;
 use std::fs;
@@ -88,6 +89,12 @@ pub enum Command {
 
     /// Jumps to the previous item in the location list
     Prev,
+
+    /// Jumps to the selected index in the location list
+    BufJump {
+        bufname: String,
+        selection: KakouneRange,
+    },
 
     /// Opens the location list in a special buffer
     Open,
@@ -226,6 +233,27 @@ fn main() -> Result<(), Box<dyn Error>> {
                 } else {
                     ctx.cmd("echo -markup '{Error}Reached beginning of list'".to_string());
                 }
+            }
+            lists.write();
+        }
+        Command::BufJump {
+            ref bufname,
+            ref selection,
+        } => {
+            // PANIC: If the client changes the buffer name, that's their own dang fault!
+            let (list_key, _) = bufname.rsplit_once("_").unwrap();
+            let mut list_key = list_key.to_string();
+            list_key.remove(0);
+
+            if list_key == "global" {
+                list_key = util::DEFAULT_NAME.to_string();
+            }
+
+            let ctx = Context::new(&app)?;
+            let mut lists = Lists::from_file(&ctx)?;
+            let list = lists.lists.get_mut(&list_key);
+            if let Some(list) = list {
+                list.navigate(&ctx, usize::try_from(selection.start.line - 1).unwrap());
             }
             lists.write();
         }

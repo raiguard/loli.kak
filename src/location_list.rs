@@ -326,8 +326,11 @@ impl LocationList {
 
         if let Some(location) = self.locations.get(index) {
             ctx.cmd(format!(
-                "edit {} {} {}
-                echo 'Location {} of {}'",
+                "evaluate-commands -try-client %opt{{jumpclient}} %{{
+                    edit {} {} {}
+                    try %{{ focus %opt{{jumpclient}} }}
+                    echo 'Location {} of {}'
+                }}",
                 location.filename,
                 location.range.start.line,
                 location.range.start.column,

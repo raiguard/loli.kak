@@ -156,11 +156,18 @@ define-command copen %{
     }
 }
 
-# HIGHLIGHTING
+# FILETYPE
 
-hook -group loli-highlight global WinSetOption filetype=loli %{
+hook global WinSetOption filetype=loli %{
     add-highlighter window/loli group
     add-highlighter window/loli/ regex "^(.) ((?:\w:)?[^:\n]+):(\d+):(\d+)? (\|)" 1:green 2:cyan 3:green 4:green 5:comment
     # add-highlighter window/loli/ line %{%opt{loli_current_line}} default+b
     hook -once -always window WinSetOption filetype=.* %{ remove-highlighter window/loli }
+    hook buffer -group loli-hooks NormalKey <ret> loli-jump
+}
+
+define-command -hidden loli-jump %{
+    evaluate-commands %sh{
+        $kak_opt_loli_cmd -i $kak_command_fifo -o $kak_response_fifo -t $kak_timestamp buf-jump $kak_bufname $kak_selection_desc
+    }
 }
