@@ -132,6 +132,7 @@ pub struct LocationList {
 
 impl LocationList {
     pub fn from_str_list(name: &str, input: &str) -> Result<Self, LocationListErr> {
+        let input = input.replace("\n", " ");
         static LIST_REGEX: OnceCell<Regex> = OnceCell::new();
         let regex = LIST_REGEX
             .get_or_init(|| Regex::new(r"'(.*?)\|(\d+)\.(\d+),(\d+)\.(\d+)\|(.*?)'").unwrap());
