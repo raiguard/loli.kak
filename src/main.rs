@@ -115,10 +115,16 @@ fn main() -> Result<(), Box<dyn Error>> {
             let ctx = Context::new(&app)?;
             let list = LocationList::from_grep(&ctx.list_key, fs::read_to_string(output_path)?)?;
 
-            let mut lists = Lists::from_file(&ctx)?;
+            if list.locations.is_empty() {
+                ctx.cmd("echo -markup '{Error}No matches found'".to_string());
+            } else {
+                ctx.cmd(format!("echo '{} matches found'", list.locations.len()));
 
-            lists.insert(list, &ctx)?;
-            lists.write();
+                let mut lists = Lists::from_file(&ctx)?;
+
+                lists.insert(list, &ctx)?;
+                lists.write();
+            }
         }
         Command::List { ref input } => {
             let ctx = Context::new(&app)?;
@@ -152,6 +158,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     util::strip_an(&buffer)
                 ))?;
 
+                // TODO: Use the timestamp to avoid needlessly updating lists
                 // let timestamp: usize = src_list.get(0).unwrap_or(&"0".to_string()).parse()?;
 
                 let locations: Result<Vec<(usize, KakouneRange)>, LocationListErr> = src_list
@@ -200,7 +207,12 @@ fn main() -> Result<(), Box<dyn Error>> {
             let mut lists = Lists::from_file(&ctx)?;
             let list = lists.get_mut(&ctx);
             if let Some(list) = list {
-                list.navigate(&ctx, list.index + 1);
+                // Remember that indices are zero-indexed!
+                if list.index < list.locations.len() - 1 {
+                    list.navigate(&ctx, list.index + 1);
+                } else {
+                    ctx.cmd("echo -markup '{Error}Reached end of list'".to_string());
+                }
             }
             lists.write();
         }
@@ -209,7 +221,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             let mut lists = Lists::from_file(&ctx)?;
             let list = lists.get_mut(&ctx);
             if let Some(list) = list {
-                list.navigate(&ctx, list.index - 1);
+                if list.index > 0 {
+                    list.navigate(&ctx, list.index - 1);
+                } else {
+                    ctx.cmd("echo -markup '{Error}Reached beginning of list'".to_string());
+                }
             }
             lists.write();
         }

@@ -321,14 +321,18 @@ impl LocationList {
     }
 
     pub fn navigate(&mut self, ctx: &Context, index: usize) {
-        // TODO: Show an error in kak when trying to go past the end of a list
         let index = index.clamp(0, self.locations.len() - 1);
         self.index = index;
 
         if let Some(location) = self.locations.get(index) {
             ctx.cmd(format!(
-                "edit {} {} {}",
-                location.filename, location.range.start.line, location.range.start.column,
+                "edit {} {} {}
+                echo 'Location {} of {}'",
+                location.filename,
+                location.range.start.line,
+                location.range.start.column,
+                index + 1,
+                self.locations.len()
             ))
         }
     }
