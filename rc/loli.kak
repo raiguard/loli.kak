@@ -160,7 +160,7 @@ define-command copen %{
 
 hook -group loli-highlight global WinSetOption filetype=loli %{
     add-highlighter window/loli group
-    add-highlighter window/loli/ regex "^((?:\w:)?[^:\n]+):(\d+):(\d+)? (\|)" 1:cyan 2:green 3:green 4:comment
+    add-highlighter window/loli/ regex "^(.) ((?:\w:)?[^:\n]+):(\d+):(\d+)? (\|)" 1:green 2:cyan 3:green 4:green 5:comment
     # add-highlighter window/loli/ line %{%opt{loli_current_line}} default+b
     hook -once -always window WinSetOption filetype=.* %{ remove-highlighter window/loli }
 }

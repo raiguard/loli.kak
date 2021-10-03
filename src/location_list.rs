@@ -124,6 +124,7 @@ impl Lists {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct LocationList {
     pub highlighters: HashSet<Highlighter>,
+    /// The active index in the location list.
     pub index: usize,
     pub locations: Vec<Location>,
     pub name: String,

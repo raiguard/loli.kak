@@ -197,9 +197,11 @@ fn main() -> Result<(), Box<dyn Error>> {
                 let output: String = list
                     .locations
                     .iter()
-                    .map(|location| {
+                    .enumerate()
+                    .map(|(index, location)| {
                         format!(
-                            "{}:{}:{} | {}",
+                            "{} {}:{}:{} | {}",
+                            if list.index == index { ">" } else { " " },
                             location.filename,
                             location.range.start.line,
                             location.range.start.column,
@@ -213,7 +215,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     "evaluate-commands -save-regs '\"' -try-client %opt{{toolsclient}} %@
                         edit! -scratch '*{}_locations*'
                         set-register '\"' '{}'
-                        execute-keys Pgg
+                        execute-keys P{}g
                         set-option buffer filetype loli
                         set-option buffer readonly true
                         try %{{ focus %opt{{toolsclient}} }}
@@ -224,6 +226,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                         &list.name
                     },
                     util::editor_escape(&output),
+                    list.index + 1
                 ));
                 log::debug!("{}", output);
             }
