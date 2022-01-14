@@ -24,7 +24,7 @@ declare-option -hidden int loli_prev_timestamp 0
 # regex="(.*)\|([0-9]*?)\.([0-9]*?),([0-9]*?)\.([0-9]*?)\|(.*)"
 
 # Create a range-specs for the current buffer
-define-command -hidden loli_update_ranges %{
+define-command -hidden loli-update-ranges %{
     # Clear the current ranges
     set-option window loli_global_ranges %val{timestamp}
     evaluate-commands %sh{
@@ -47,11 +47,11 @@ define-command -hidden loli_update_ranges %{
     }
 }
 
-define-command loli_update_all_ranges %{
+define-command loli-update-all-ranges %{
     evaluate-commands %sh{
         eval set -- $kak_quoted_client_list
         while [ $# -gt 0 ]; do
-            echo "evaluate-commands -client $1 loli_update_ranges"
+            echo "evaluate-commands -client $1 loli-update-ranges"
             shift
         done
     }
@@ -70,7 +70,7 @@ hook global NormalIdle .* %{
     }
 }
 
-# Add highlighter to update ranges if they exist
+# Add highlighter for the ranges
 hook global WinCreate .* %{
     hook -once -always global WinDisplay .* %{
         add-highlighter window/ ranges loli_global_ranges
@@ -79,7 +79,7 @@ hook global WinCreate .* %{
 
 # Update ranges that might have changed when the window was dormant
 hook global WinDisplay .* %{
-    loli_update_ranges
+    loli-update-ranges
 }
 
 # Update the master list based on updates to the range-specs
@@ -89,7 +89,7 @@ hook global User LoliBufChange %{
         declare -a global_list
         eval set -- $kak_quoted_opt_loli_global_list
         while [ $# -gt 0 ]; do
-            global_list+=($1)
+            global_list+=("$1")
             shift
         done
 
@@ -98,8 +98,8 @@ hook global User LoliBufChange %{
         # And skip the timestamp
         shift
 
-        list_regex="(.*)\|([0-9]*?\.[0-9]*?,[0-9]*?\.[0-9]*?)\|(.*)"
-        range_regex="([0-9]*?\.[0-9]*?,[0-9]*?\.[0-9]*?)\|(.*)"
+        list_regex="^(.*)\|([0-9]*?\.[0-9]*?,[0-9]*?\.[0-9]*?)\|(.*)$"
+        range_regex="^([0-9]*?\.[0-9]*?,[0-9]*?\.[0-9]*?)\|(.*)$"
 
         # Begin set-option command
         echo -n "set-option global loli_global_list "
@@ -107,21 +107,21 @@ hook global User LoliBufChange %{
         for i in "${!global_list[@]}"; do
             location=${global_list[$i]}
             # Extract data from the location
-            if [[ "$location" =~ $list_regex ]]; then
+            if [[ $location =~ $list_regex ]]; then
                 # Check that this location is in the current buffer
                 bufname=${BASH_REMATCH[1]}
                 preview=${BASH_REMATCH[3]}
-                if [ "$bufname" == "$kak_bufname" ]; then
+                if [ $bufname == "$kak_bufname" ]; then
                     # Extract data from the current range
                     if [[ "$1" =~ $range_regex ]]; then
                         # Add the potentially updated location
-                        range=${BASH_REMATCH[1]}
+                        range="${BASH_REMATCH[1]}"
                         echo -n "'${bufname}|${range}|${preview}' "
                         # Move to the next range
                         shift
                     fi
                 else
-                    # Append the same location
+                    Append the same location
                     echo -n "'$location' "
                 fi
             fi
@@ -130,5 +130,5 @@ hook global User LoliBufChange %{
 }
 
 hook global GlobalSetOption loli_global_list=.* %{
-    loli_update_all_ranges
+    loli-update-all-ranges
 }

@@ -1,7 +1,7 @@
 # DEBUGGING
 set-face global LoliLocation +r
 
-set-option global loli_global_list debug.kak|1.1,1.1|foo loli.kak|2.7,2.7|bar loli.kak|11.10,11.10|bar
+set-option global loli_global_list 'rc/debug.kak|1.1,1.1|# DEBUGGING' 'rc/loli.kak|1.1,1.1|# Let us simply whatever' 'foo|bar the|1.1,1.1|LET US BE HEATHENS' 'break?|1.1,1.1|%opt{foo}'
 
 define-command loli-debug %{
     info -title "loli debug" \
@@ -19,4 +19,8 @@ hook global User LoliBufChange %{
 
 hook global GlobalSetOption loli_global_list=.* %{
     echo -debug %opt{loli_global_list}
+}
+
+define-command loli-add-selection -params 1 %{
+    set-option -add global loli_global_list "%val{bufname}|%val{selection_desc}|%arg{1}"
 }
