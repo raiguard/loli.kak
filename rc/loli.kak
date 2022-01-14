@@ -93,9 +93,6 @@ hook global User LoliBufChange %{
             shift
         done
 
-        # Reset the global list
-        echo "set-option global loli_global_list"
-
         # Set the current ranges to the environment
         eval set -- $kak_quoted_opt_loli_global_ranges
         # And skip the timestamp
@@ -104,9 +101,8 @@ hook global User LoliBufChange %{
         list_regex="(.*)\|([0-9]*?\.[0-9]*?,[0-9]*?\.[0-9]*?)\|(.*)"
         range_regex="([0-9]*?\.[0-9]*?,[0-9]*?\.[0-9]*?)\|(.*)"
 
-        # Creating a new list is more efficient than modifying in-place
-        # Modifying in-place would require creating sub-arrays with matching...
-        declare -a new_global_list
+        # Begin set-option command
+        echo -n "set-option global loli_global_list "
 
         for i in "${!global_list[@]}"; do
             location=${global_list[$i]}
@@ -118,17 +114,21 @@ hook global User LoliBufChange %{
                 if [ "$bufname" == "$kak_bufname" ]; then
                     # Extract data from the current range
                     if [[ "$1" =~ $range_regex ]]; then
-                        # Add the updated range
+                        # Add the potentially updated location
                         range=${BASH_REMATCH[1]}
-                        echo "set-option -add global loli_global_list '${bufname}|${range}|${preview}'"
+                        echo -n "'${bufname}|${range}|${preview}' "
                         # Move to the next range
                         shift
                     fi
                 else
-                    # Re-add the same location
-                    echo "set-option -add global loli_global_list '$location'"
+                    # Append the same location
+                    echo -n "'$location' "
                 fi
             fi
         done
     }
+}
+
+hook global GlobalSetOption loli_global_list=.* %{
+    loli_update_all_ranges
 }
