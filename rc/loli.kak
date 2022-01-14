@@ -97,12 +97,12 @@ hook global GlobalSetOption loli_global_list=.* %{
 
 # Create a range-specs for the current buffer
 define-command -hidden loli-update-ranges %{
-    # Clear the current ranges
-    set-option window loli_global_ranges %val{timestamp}
     evaluate-commands %sh{
         regex="(.*)\|([0-9]*?\.[0-9]*?,[0-9]*?\.[0-9]*?)\|(.*)"
         # Loop over the list
         eval set -- "$kak_quoted_opt_loli_global_list"
+        # Begin the command
+        echo -n "set-option window loli_global_ranges $kak_timestamp "
         while [ $# -gt 0 ]; do
             if [[ "$1" =~ $regex ]]; then
                 # Check that this item is in the current buffer
@@ -111,7 +111,7 @@ define-command -hidden loli-update-ranges %{
                     # Add the range to be displayed and/or updated
                     range=${BASH_REMATCH[2]}
                     preview=${BASH_REMATCH[3]}
-                    echo "set-option -add window loli_global_ranges ${range}|LoliLocation"
+                    echo -n "'${range}|LoliLocation' "
                 fi
             fi
             shift
