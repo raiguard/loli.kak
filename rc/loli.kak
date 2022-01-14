@@ -121,7 +121,7 @@ hook global User LoliBufChange %{
                         shift
                     fi
                 else
-                    Append the same location
+                    # Append the same location
                     echo -n "'$location' "
                 fi
             fi
