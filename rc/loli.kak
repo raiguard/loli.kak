@@ -2,67 +2,23 @@
 # Then we can focus on the client lists
 
 # str-list to hold the master copy of the list
-declare-option str-list loli_global_list
+declare-option -hidden str-list loli_global_list
 # range-specs for updating the ranges
 # We can use this for every client by setting it at the window level
-declare-option range-specs loli_global_ranges
-
+declare-option -hidden range-specs loli_global_ranges
+# Timestamp to signal when the list positions need to be updated
 declare-option -hidden int loli_prev_timestamp 0
-
-# First, make a mechanism for storing a master list and syncing it with various range-specs
-
-# TODO: Figure out how to make requires work and make a util for parsing multiple passed lists
+# Visualize the locations in the current buffer
+set-face global LoliLocation ""
 
 # Refresh all range-specs when the master list is updated
 hook global GlobalSetOption loli_global_list=.* %{
-    lua %opt{loli_global_list} "$&$" %val{client_list} %{
-        local function parse_args(var_names, list_names)
-            local vars = {}
-            local i = 0
-            for _, var_name in pairs(var_names) do
-                i = i + 1
-                vars[var_name] = arg[i]
-            end
-
-            local lists = {}
-            for _, list_name in pairs(list_names) do
-                i = i + 1
-                local list = {}
-                local item = arg[i]
-                while item and item ~= "$&$" and item ~= "lua" do
-                    table.insert(list, item)
-                    i = i + 1
-                    item = arg[i]
-                end
-                lists[list_name] = list
-            end
-
-            return vars, lists
-        end
-
-        local range_specs = {}
-        local vars, lists = parse_args({}, {"entries", "clients"})
-        for _, entry in pairs(lists.entries) do
-            local _, _, filename, range, preview = string.find(entry, "(.-)%|(%d+.%d+,%d+.%d+)%|(.*)")
-            if range and filename and preview then
-                local specs = range_specs[filename]
-                if not specs then
-                    specs = {}
-                    range_specs[filename] = specs
-                end
-                table.insert(specs, range.."|"..preview)
-            end
-        end
-
-        kak.echo("-debug", "RANGES:")
-        for filename, ranges in pairs(range_specs) do
-            kak.echo("-debug", filename..": "..table.concat(ranges, " // "))
-        end
-
-        kak.echo("-debug", "CLIENTS:")
-        for _, client_name in pairs(lists.clients) do
-            kak.echo("-debug", client_name)
-        end
+    evaluate-commands %sh{
+        eval set -- $kak_quoted_client_list
+        while [ $# -gt 0 ]; do
+            echo "evaluate-commands -client $1 loli_update_ranges"
+            shift
+        done
     }
 }
 
@@ -79,4 +35,43 @@ hook global NormalIdle .* %{
 
 hook global User LoliBufChange %{
     echo "update master list"
+}
+
+# Add highlighter to update ranges if they exist
+hook global WinCreate .* %{
+    hook -once -always global WinDisplay .* %{
+        add-highlighter window/ ranges loli_global_ranges
+    }
+}
+
+# Update ranges that might have changed when the window was dormant
+hook global WinDisplay .* %{
+    loli_update_ranges
+}
+
+# To get the range parts:
+# regex="(.*)\|([0-9]*?)\.([0-9]*?),([0-9]*?)\.([0-9]*?)\|(.*)"
+
+# Create a range-specs for the current buffer
+define-command -hidden loli_update_ranges %{
+    # Clear the current ranges
+    set-option window loli_global_ranges %val{timestamp}
+    evaluate-commands %sh{
+        regex="(.*)\|([0-9]*?\.[0-9]*?,[0-9]*?\.[0-9]*?)\|(.*)"
+        # Loop over the list
+        eval set -- "$kak_quoted_opt_loli_global_list"
+        while [ $# -gt 0 ]; do
+            if [[ "$1" =~ $regex ]]; then
+                # Check that this item is in the current buffer
+                bufname=${BASH_REMATCH[1]}
+                if [ "$bufname" == "$kak_bufname" ]; then
+                    # Add the range to be displayed and/or updated
+                    range=${BASH_REMATCH[2]}
+                    preview=${BASH_REMATCH[3]}
+                    echo "set-option -add window loli_global_ranges ${range}|LoliLocation"
+                fi
+            fi
+            shift
+        done
+    }
 }
