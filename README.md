@@ -16,4 +16,10 @@ Source `rc/loli.kak` manually. If you use a plugin manager at the moment, it wil
 
 ## Usage
 
-The plugin doesn't do much right now. You can manually update the `loli_global_list` option and then call `loli_update_all_ranges` show them in your buffers. See `rc/debug.kak` for the formatting, etc.
+Updating the `loli_global_list` option with strings in the format of `{filename}|{range}|{preview}` will create a location list. This list will update as changes are made to each buffer.
+
+Use the `LoliLocation` face to view the locations. The face is invisible by default, so you must overwrite it for the locations to be visible:
+
+```kak
+set-face global LoliLocation +r
+```
