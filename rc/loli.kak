@@ -66,7 +66,8 @@ hook global User LoliBufChange %{
         echo -n "set-option global loli_global_list "
 
         for i in "${!global_list[@]}"; do
-            location=${global_list[$i]}
+            # Re-escape single quotes by doubling them up
+            location=$(echo ${global_list[$i]} | sed "s/'/''/g")
             if [[ $location =~ $list_regex ]]; then
                 # Check that this location is in the current buffer
                 bufname=${BASH_REMATCH[1]}

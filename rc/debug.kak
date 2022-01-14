@@ -2,6 +2,7 @@
 set-face global LoliLocation +r
 
 set-option global loli_global_list 'rc/debug.kak|1.1,1.1|# DEBUGGING' 'rc/loli.kak|1.1,1.1|# Let us simply whatever' 'foo|bar the|1.1,1.1|LET US BE HEATHENS' 'break?|1.1,1.1|%opt{foo}' 'single quote|1.1,1.1|a fool man''s parade'
+# set-option global loli_global_list 'single quote|1.1,1.1|a fool man''s parade'
 
 define-command loli-debug %{
     info -title "loli debug" \
