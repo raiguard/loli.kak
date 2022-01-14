@@ -14,9 +14,6 @@ loli_global_ranges: %opt{loli_global_ranges}"
 hook global NormalIdle .* %{
     loli-debug
 }
-hook global User LoliBufChange %{
-    loli-debug
-}
 
 hook global GlobalSetOption loli_global_list=.* %{
     echo -debug %opt{loli_global_list}
