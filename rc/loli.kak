@@ -235,6 +235,20 @@ define-command loli-global-prev \
     loli-global-jump %sh{ expr $kak_opt_loli_global_index - 1 }
 }
 
+define-command loli-global-first \
+-docstring "jump to the first location in the global list" \
+%{
+    loli-global-jump 1
+}
+
+define-command loli-global-last \
+-docstring "jump to the last location in the global list" \
+%{
+    loli-global-jump %sh{
+        eval set -- $kak_quoted_opt_loli_global_list
+        echo "$#"
+    }
+}
 
 define-command loli-add-aliases \
 -docstring "add useful command aliases for loli" \
@@ -244,4 +258,6 @@ define-command loli-add-aliases \
     alias global gjump loli-global-jump
     alias global gnext loli-global-next
     alias global gprev loli-global-prev
+    alias global gfirst loli-global-first
+    alias global glast loli-global-last
 }
