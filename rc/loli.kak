@@ -173,7 +173,7 @@ define-command loli-global-open \
             set-option buffer filetype loli
             set-option buffer readonly true
             hook -always -once buffer BufCloseFifo .* %{ nop %sh{ rm -r $(dirname ${output}) } }
-            map buffer normal <ret> ': loli-global-jump-buffer<ret>'
+            map buffer normal <ret> ': loli-global-jump %val{cursor_line}<ret>'
         "
     }
 }
@@ -215,15 +215,6 @@ define-command loli-global-jump \
                 set-option global loli_global_index $index
                 edit '$bufname' $row $col
             "
-        fi
-    }
-}
-
-define-command -hidden loli-global-jump-buffer %{
-    evaluate-commands %sh{
-        regex="^([0-9]*?)\..*$"
-        if [[ "$kak_selection_desc" =~ $regex ]]; then
-            echo "loli-global-jump ${BASH_REMATCH[1]}"
         fi
     }
 }
