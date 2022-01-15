@@ -192,8 +192,7 @@ define-command loli-global-jump \
 -params 1 \
 -docstring "jump to the given index in the global location list" \
 %{
-    echo -debug %arg{1}
-    evaluate-commands %sh{
+    evaluate-commands -try-client %opt{jumpclient} %sh{
         index=$1
         location=""
         eval set -- $kak_quoted_opt_loli_global_list
