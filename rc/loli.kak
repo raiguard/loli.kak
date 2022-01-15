@@ -6,14 +6,26 @@
 # Visualize the locations in the current buffer
 set-face global LoliLocation ""
 
+# HIGHLIGHTERS
+
+hook -group loli-highlight global WinSetOption filetype=loli %{
+    add-highlighter window/loli group
+    add-highlighter window/loli/ regex "^((?:\w:)?[^:\n]+)(\|)(\d+:\d+)(\|)?" 1:blue 2:default 3:comment 5:default
+    # add-highlighter window/loli/ line %{%opt{loli_current_line}} default+b
+    hook -once -always window WinSetOption filetype=.* %{ remove-highlighter window/loli }
+}
+
 # OPTIONS
 
-# str-list to hold the master copy of the list
+# Str-list to hold the master copy of the list
 declare-option -hidden str-list loli_global_list
 
-# range-specs for updating the ranges
+# Range-specs for updating the ranges
 # We can use this for every client by setting it at the window level
 declare-option -hidden range-specs loli_global_ranges
+
+# The current selected index in the list
+declare-option -hidden int loli_global_index
 
 # Timestamp to signal when the list positions need to be updated
 declare-option -hidden int loli_prev_timestamp 0
@@ -96,7 +108,7 @@ hook global GlobalSetOption loli_global_list=.* %{
 # To get the range parts:
 # regex="(.*)\|([0-9]*?)\.([0-9]*?),([0-9]*?)\.([0-9]*?)\|(.*)"
 
-# Create a range-specs for the current buffer
+# Create a range-specs for the current window
 define-command -hidden loli-update-ranges %{
     evaluate-commands %sh{
         regex="(.*)\|([0-9]*?\.[0-9]*?,[0-9]*?\.[0-9]*?)\|(.*)"
@@ -120,6 +132,7 @@ define-command -hidden loli-update-ranges %{
     }
 }
 
+# Update all currently displayed windows
 define-command -hidden loli-update-all-ranges %{
     evaluate-commands %sh{
         eval set -- $kak_quoted_client_list
@@ -128,4 +141,40 @@ define-command -hidden loli-update-all-ranges %{
             shift
         done
     }
+}
+
+# Open the location list in a buffer
+define-command loli-global-open %{
+    evaluate-commands -try-client %opt{toolsclient} -save-regs '"' %sh{
+        regex="(.*)\|([0-9]*?)\.([0-9]*?),([0-9]*?)\.([0-9]*?)\|(.*)"
+        eval set -- "$kak_quoted_opt_loli_global_list"
+        content=""
+        while [ $# -gt 0 ]; do
+            if [[ "$1" =~ $regex ]]; then
+                bufname=${BASH_REMATCH[1]}
+                range_start_line=${BASH_REMATCH[2]}
+                range_start_column=${BASH_REMATCH[3]}
+                preview=${BASH_REMATCH[6]}
+                # This is ugly, but it works
+                content="${content}${bufname}|${range_start_line}:${range_start_column}| ${preview}
+"
+            fi
+            shift
+        done
+        output=$(mktemp -d "${TMPDIR:-/tmp}"/kak-loli.XXXXXXXX)/fifo
+        mkfifo ${output}
+        ( printf "%s" "$content" | perl -pe "chomp if eof" | sed "s/@/@@/" | tr -d '\r' > ${output} 2>&1 & ) > /dev/null 2>&1 < /dev/null
+
+        echo "
+            edit! -fifo ${output} *loli-global*
+            set-option window filetype loli
+            set-option buffer readonly true
+            hook -always -once buffer BufCloseFifo .* %{ nop %sh{ rm -r $(dirname ${output}) } }
+        "
+    }
+}
+
+# Add convenient aliases for various commands
+define-command loli-add-aliases %{
+    alias global gopen loli-global-open
 }
