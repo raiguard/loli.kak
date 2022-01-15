@@ -1,8 +1,7 @@
 # DEBUGGING
 set-face global LoliLocation +r
 
-set-option global loli_global_list 'rc/debug.kak|1.1,1.1|# DEBUGGING' 'rc/loli.kak|1.1,1.1|# Let us simply whatever' 'foo|bar the|1.1,1.1|LET US BE HEATHENS' 'break?|1.1,1.1|%opt{foo}' 'single quote|1.1,1.1|a fool man''s parade' 'rc/loli.kak|28.1,28.1|printf @ %opt{ %@ ''trigger-user-hook LoliBufChange\n'''
-# set-option global loli_global_list 'single quote|1.1,1.1|a fool man''s parade'
+set-option global loli_global_list 'rc/debug.kak|1.1,1.1|# DEBUGGING' 'rc/loli.kak|1.1,1.1|# Let us simply whatever' 'foo|bar the|1.1,1.1|LET US BE HEATHENS' 'break?|1.1,1.1|%opt{foo}' 'single quote|1.1,1.1|a fool man''s parade' 'rc/loli.kak|28.1,28.1|printf ''trigger-user-hook LoliBufChange\n''' 'rc/loli/kak|1.1,1.1|@ % @@ %% %@ @% %val{timestamp} '''''''
 
 define-command loli-debug %{
     info -title "loli debug" \
