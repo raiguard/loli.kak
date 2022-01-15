@@ -142,8 +142,9 @@ define-command -hidden loli-update-all-ranges %{
     }
 }
 
-# Open the location list in a buffer
-define-command loli-global-open %{
+define-command loli-global-open \
+-docstring "open the global location list buffer" \
+%{
     evaluate-commands -try-client %opt{toolsclient} -save-regs '"' %sh{
         regex="(.*)\|([0-9]*?)\.([0-9]*?),([0-9]*?)\.([0-9]*?)\|(.*)"
         eval set -- "$kak_quoted_opt_loli_global_list"
@@ -177,8 +178,9 @@ define-command loli-global-open %{
     }
 }
 
-# Close the open location list buffer
-define-command loli-global-close %{
+define-command loli-global-close \
+-docstring "close the global location list buffer" \
+%{
     try %{
         evaluate-commands -buffer *loli-global* delete-buffer
     } catch %{
@@ -186,8 +188,10 @@ define-command loli-global-close %{
     }
 }
 
-# Jump to the specified index in the list
-define-command loli-global-jump -params 1 %{
+define-command loli-global-jump \
+-params 1 \
+-docstring "jump to the given index in the global location list" \
+%{
     evaluate-commands %sh{
         index=$1
         location=""
