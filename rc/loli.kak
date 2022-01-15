@@ -192,6 +192,7 @@ define-command loli-global-jump \
 -params 1 \
 -docstring "jump to the given index in the global location list" \
 %{
+    echo -debug %arg{1}
     evaluate-commands %sh{
         index=$1
         location=""
@@ -250,6 +251,53 @@ define-command loli-global-last \
     }
 }
 
+# TODO: Perhaps find a way to deduplicate this?
+
+define-command loli-global-before \
+-docstring "jump to the closest location before the current selection" \
+%{
+    evaluate-commands %sh{
+        regex="^.*\|([0-9]*?)\.([0-9]*?),.*$"
+        eval set -- $kak_quoted_opt_loli_global_list
+        for (( i=$#; i>0; i-- )); do
+            if [[ "${!i}" =~ $regex ]]; then
+                loc_line=${BASH_REMATCH[1]}
+                loc_col=${BASH_REMATCH[2]}
+                if [ $loc_line -eq $kak_cursor_line -a $loc_col -lt $kak_cursor_column ] || [ $loc_line -lt $kak_cursor_line ]; then
+                    echo "loli-global-jump ${i}"
+                    return
+                fi
+            fi
+        done
+
+        echo "fail 'No location found'"
+    }
+}
+
+define-command loli-global-after \
+-docstring "jump to the closest location after the current selection" \
+%{
+    evaluate-commands %sh{
+        regex="^.*\|([0-9]*?)\.([0-9]*?),.*$"
+        eval set -- $kak_quoted_opt_loli_global_list
+        declare -i i=0
+        while [ $# -gt 0 ]; do
+            if [[ "$1" =~ $regex ]]; then
+                i+=1
+                loc_line=${BASH_REMATCH[1]}
+                loc_col=${BASH_REMATCH[2]}
+                if [ $loc_line -eq $kak_cursor_line -a $loc_col -gt $kak_cursor_column ] || [ $loc_line -gt $kak_cursor_line ]; then
+                    echo "loli-global-jump ${i}"
+                    return
+                fi
+            fi
+            shift
+        done
+
+        echo "fail 'No location found'"
+    }
+}
+
 define-command loli-add-aliases \
 -docstring "add useful command aliases for loli" \
 %{
@@ -260,4 +308,6 @@ define-command loli-add-aliases \
     alias global gprev loli-global-prev
     alias global gfirst loli-global-first
     alias global glast loli-global-last
+    alias global gbefore loli-global-before
+    alias global gafter loli-global-after
 }
