@@ -12,7 +12,7 @@ set-face global LoliSelectedLine default+b
 
 hook -group loli-highlight global WinSetOption filetype=loli %{
     add-highlighter window/loli group
-    add-highlighter window/loli/ regex "^((?:\w:)?[^:\n]+)\|(\d+:\d+)\|?" 1:blue 2:comment
+    add-highlighter window/loli/ regex "^(.*?)\|(\d+:\d+)\|?" 1:blue 2:comment
     add-highlighter window/loli/ line %{%opt{loli_global_index}} LoliSelectedLine
     hook -once -always window WinSetOption filetype=.* %{ remove-highlighter window/loli }
 }
@@ -73,7 +73,7 @@ hook global User LoliBufChange %{
         # And skip the timestamp
         shift
 
-        list_regex="^(.*)\|([0-9]*?\.[0-9]*?,[0-9]*?\.[0-9]*?)\|(.*)$"
+        list_regex="^(.*?)\|([0-9]*?\.[0-9]*?,[0-9]*?\.[0-9]*?)\|(.*)$"
         range_regex="^([0-9]*?\.[0-9]*?,[0-9]*?\.[0-9]*?)\|(.*)$"
 
         # Begin set-option command
@@ -110,7 +110,7 @@ hook global GlobalSetOption loli_global_list=.* %{
 # Create a range-specs for the current window
 define-command -hidden loli-update-ranges %{
     evaluate-commands %sh{
-        regex="(.*)\|([0-9]*?\.[0-9]*?,[0-9]*?\.[0-9]*?)\|(.*)"
+        regex="^(.*?)\|([0-9]*?\.[0-9]*?,[0-9]*?\.[0-9]*?)\|(.*)$"
         # Loop over the list
         eval set -- "$kak_quoted_opt_loli_global_list"
         # Begin the command
@@ -146,7 +146,7 @@ define-command loli-global-open \
 -docstring "open the global location list buffer" \
 %{
     evaluate-commands -try-client %opt{toolsclient} -save-regs '"' %sh{
-        regex="(.*)\|([0-9]*?)\.([0-9]*?),([0-9]*?)\.([0-9]*?)\|(.*)"
+        regex="^(.*?)\|([0-9]*?)\.([0-9]*?),([0-9]*?)\.([0-9]*?)\|(.*)$"
         eval set -- "$kak_quoted_opt_loli_global_list"
 
         content=""
@@ -210,7 +210,7 @@ define-command loli-global-jump \
                 return
             fi
         done
-        regex="^(.*)\|([0-9]*?)\.([0-9]*?),.*$"
+        regex="^(.*?)\|([0-9]*?)\.([0-9]*?),.*$"
         if [[ "$location" =~ $regex ]]; then
             bufname=${BASH_REMATCH[1]}
             row=${BASH_REMATCH[2]}
@@ -257,7 +257,7 @@ define-command loli-global-before \
 -docstring "jump to the closest location before the current selection" \
 %{
     evaluate-commands %sh{
-        regex="^.*\|([0-9]*?)\.([0-9]*?),.*$"
+        regex="^.*?\|([0-9]*?)\.([0-9]*?),.*$"
         eval set -- $kak_quoted_opt_loli_global_list
         for (( i=$#; i>0; i-- )); do
             if [[ "${!i}" =~ $regex ]]; then
@@ -278,7 +278,7 @@ define-command loli-global-after \
 -docstring "jump to the closest location after the current selection" \
 %{
     evaluate-commands %sh{
-        regex="^.*\|([0-9]*?)\.([0-9]*?),.*$"
+        regex="^.*?\|([0-9]*?)\.([0-9]*?),.*$"
         eval set -- $kak_quoted_opt_loli_global_list
         declare -i i=0
         while [ $# -gt 0 ]; do
@@ -303,7 +303,7 @@ define-command loli-global-vanilla-buffer \
 %{
     execute-keys <percent>
     evaluate-commands %sh{
-        line_regex="^(.*):([0-9]*?):([0-9]*?):(.*)$"
+        line_regex="^(.*?):([0-9]*?):([0-9]*?):(.*)$"
         echo -n "set-option global loli_global_list "
         while IFS= read -r line; do
             line=$( echo $line | sed 's/@/@@/g' )
