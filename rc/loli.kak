@@ -298,6 +298,27 @@ define-command loli-global-after \
     }
 }
 
+define-command loli-global-vanilla-buffer \
+-docstring "create a location list from the contents of the current grep-like buffer" \
+%{
+    execute-keys <percent>
+    evaluate-commands %sh{
+        line_regex="^(.*):([0-9]*?):([0-9]*?):(.*)$"
+        echo -n "set-option global loli_global_list "
+        while IFS= read -r line; do
+            line=$( echo $line | sed 's/@/@@/g' )
+            if [[ "$line" =~ $line_regex ]]; then
+                filename=${BASH_REMATCH[1]}
+                range_line=${BASH_REMATCH[2]}
+                range_col=${BASH_REMATCH[3]}
+                preview=${BASH_REMATCH[4]}
+
+                echo -n "%@$filename|$range_line.$range_col,$range_line.$range_col|$preview@"
+            fi
+        done <<< "$kak_selection"
+    }
+}
+
 define-command loli-add-aliases \
 -docstring "add useful command aliases for loli" \
 %{
