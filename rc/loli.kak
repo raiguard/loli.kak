@@ -66,8 +66,8 @@ hook global User LoliBufChange %{
         echo -n "set-option global loli_global_list "
 
         for i in "${!global_list[@]}"; do
-            # Re-escape single quotes by doubling them up
-            location=$(echo ${global_list[$i]} | sed "s/'/''/")
+            # Escape the delimiter and % to avoid expansions
+            location=$(echo "${global_list[$i]}" | sed "s/@/@@/g")
             if [[ "$location" =~ $list_regex ]]; then
                 # Check that this location is in the current buffer
                 bufname=${BASH_REMATCH[1]}
@@ -75,12 +75,12 @@ hook global User LoliBufChange %{
                 if [ "$bufname" == "$kak_bufname" ] && [[ "$1" =~ $range_regex ]]; then
                     # Add the potentially updated location
                     range="${BASH_REMATCH[1]}"
-                    echo -n "'${bufname}|${range}|${preview}' "
+                    echo -n "%@${bufname}|${range}|${preview}@ "
                     # Move to the next range
                     shift
                 else
                     # Append the same location
-                    echo -n "'$location' "
+                    echo -n "%@$location@ "
                 fi
             fi
         done
