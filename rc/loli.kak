@@ -196,6 +196,10 @@ define-command loli-global-jump \
         index=$1
         location=""
         eval set -- $kak_quoted_opt_loli_global_list
+        if [ $index -lt 1 ] || [ $index -gt $# ]; then
+            echo "echo -markup '{Error}Invalid index'"
+            return
+        fi
         for _ in $(seq 1 $index); do
             if [ $# -gt 0 ]; then
                 location=$(echo "$1" | sed "s/@/@@/g")
@@ -219,9 +223,25 @@ define-command loli-global-jump \
     }
 }
 
-# Add convenient aliases for various commands
-define-command loli-add-aliases %{
+define-command loli-global-next \
+-docstring "jump to the next location in the global list" \
+%{
+    loli-global-jump %sh{ expr $kak_opt_loli_global_index + 1 }
+}
+
+define-command loli-global-prev \
+-docstring "jump to the previous location in the global list" \
+%{
+    loli-global-jump %sh{ expr $kak_opt_loli_global_index - 1 }
+}
+
+
+define-command loli-add-aliases \
+-docstring "add useful command aliases for loli" \
+%{
     alias global gopen loli-global-open
     alias global gclose loli-global-close
     alias global gjump loli-global-jump
+    alias global gnext loli-global-next
+    alias global gprev loli-global-prev
 }
