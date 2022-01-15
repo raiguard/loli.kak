@@ -12,7 +12,7 @@ set-face global LoliSelectedLine default+b
 
 hook -group loli-highlight global WinSetOption filetype=loli %{
     add-highlighter window/loli group
-    add-highlighter window/loli/ regex "^((?:\w:)?[^:\n]+)(\|)(\d+:\d+)(\|)?" 1:blue 2:default 3:comment 5:default
+    add-highlighter window/loli/ regex "^((?:\w:)?[^:\n]+)\|(\d+:\d+)\|?" 1:blue 2:comment
     add-highlighter window/loli/ line %{%opt{loli_global_index}} LoliSelectedLine
     hook -once -always window WinSetOption filetype=.* %{ remove-highlighter window/loli }
 }
@@ -172,6 +172,7 @@ define-command loli-global-open %{
             set-option buffer filetype loli
             set-option buffer readonly true
             hook -always -once buffer BufCloseFifo .* %{ nop %sh{ rm -r $(dirname ${output}) } }
+            map buffer normal <ret> ': loli-global-jump-buffer<ret>'
         "
     }
 }
@@ -185,8 +186,47 @@ define-command loli-global-close %{
     }
 }
 
+# Jump to the specified index in the list
+define-command loli-global-jump -params 1 %{
+    evaluate-commands %sh{
+        index=$1
+        location=""
+        eval set -- $kak_quoted_opt_loli_global_list
+        for _ in $(seq 1 $index); do
+            if [ $# -gt 0 ]; then
+                location=$(echo "$1" | sed "s/@/@@/g")
+                shift
+            else
+                echo "echo -markup '{Error}Invalid index'"
+                return
+            fi
+        done
+        regex="^(.*)\|([0-9]*?)\.([0-9]*?),.*$"
+        if [[ "$location" =~ $regex ]]; then
+            bufname=${BASH_REMATCH[1]}
+            row=${BASH_REMATCH[2]}
+            col=${BASH_REMATCH[3]}
+
+            echo "
+                set-option global loli_global_index $index
+                edit '$bufname' $row $col
+            "
+        fi
+    }
+}
+
+define-command -hidden loli-global-jump-buffer %{
+    evaluate-commands %sh{
+        regex="^([0-9]*?)\..*$"
+        if [[ "$kak_selection_desc" =~ $regex ]]; then
+            echo "loli-global-jump ${BASH_REMATCH[1]}"
+        fi
+    }
+}
+
 # Add convenient aliases for various commands
 define-command loli-add-aliases %{
     alias global gopen loli-global-open
     alias global gclose loli-global-close
+    alias global gjump loli-global-jump
 }
