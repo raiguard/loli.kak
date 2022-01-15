@@ -6,12 +6,14 @@
 # Visualize the locations in the current buffer
 set-face global LoliLocation ""
 
+set-face global LoliSelectedLine default+b
+
 # HIGHLIGHTERS
 
 hook -group loli-highlight global WinSetOption filetype=loli %{
     add-highlighter window/loli group
     add-highlighter window/loli/ regex "^((?:\w:)?[^:\n]+)(\|)(\d+:\d+)(\|)?" 1:blue 2:default 3:comment 5:default
-    # add-highlighter window/loli/ line %{%opt{loli_current_line}} default+b
+    add-highlighter window/loli/ line %{%opt{loli_global_index}} LoliSelectedLine
     hook -once -always window WinSetOption filetype=.* %{ remove-highlighter window/loli }
 }
 
@@ -25,7 +27,7 @@ declare-option -hidden str-list loli_global_list
 declare-option -hidden range-specs loli_global_ranges
 
 # The current selected index in the list
-declare-option -hidden int loli_global_index
+declare-option -hidden int loli_global_index 1
 
 # Timestamp to signal when the list positions need to be updated
 declare-option -hidden int loli_prev_timestamp 0
@@ -105,9 +107,6 @@ hook global GlobalSetOption loli_global_list=.* %{
 
 # COMMANDS
 
-# To get the range parts:
-# regex="(.*)\|([0-9]*?)\.([0-9]*?),([0-9]*?)\.([0-9]*?)\|(.*)"
-
 # Create a range-specs for the current window
 define-command -hidden loli-update-ranges %{
     evaluate-commands %sh{
@@ -148,6 +147,7 @@ define-command loli-global-open %{
     evaluate-commands -try-client %opt{toolsclient} -save-regs '"' %sh{
         regex="(.*)\|([0-9]*?)\.([0-9]*?),([0-9]*?)\.([0-9]*?)\|(.*)"
         eval set -- "$kak_quoted_opt_loli_global_list"
+
         content=""
         while [ $# -gt 0 ]; do
             if [[ "$1" =~ $regex ]]; then
@@ -161,20 +161,32 @@ define-command loli-global-open %{
             fi
             shift
         done
+
         output=$(mktemp -d "${TMPDIR:-/tmp}"/kak-loli.XXXXXXXX)/fifo
         mkfifo ${output}
+
         ( printf "%s" "$content" | perl -pe "chomp if eof" | sed "s/@/@@/" | tr -d '\r' > ${output} 2>&1 & ) > /dev/null 2>&1 < /dev/null
 
         echo "
             edit! -fifo ${output} *loli-global*
-            set-option window filetype loli
+            set-option buffer filetype loli
             set-option buffer readonly true
             hook -always -once buffer BufCloseFifo .* %{ nop %sh{ rm -r $(dirname ${output}) } }
         "
     }
 }
 
+# Close the open location list buffer
+define-command loli-global-close %{
+    try %{
+        evaluate-commands -buffer *loli-global* delete-buffer
+    } catch %{
+        echo -markup "{Error}Global list is not open"
+    }
+}
+
 # Add convenient aliases for various commands
 define-command loli-add-aliases %{
     alias global gopen loli-global-open
+    alias global gclose loli-global-close
 }
