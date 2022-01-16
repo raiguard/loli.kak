@@ -60,7 +60,7 @@ hook global WinDisplay .* %{
 # Update the master list based on updates to the range-specs
 hook global User LoliBufChange %{
     evaluate-commands %sh{
-        # Save the current ranges to an array
+        # Save the current list to an array
         eval "global_list=($kak_quoted_opt_loli_global_list)"
 
         # Set the current ranges to the environment
@@ -307,7 +307,7 @@ define-command loli-global-vanilla-buffer \
                 filename=${BASH_REMATCH[1]}
                 range_line=${BASH_REMATCH[2]}
                 range_col=${BASH_REMATCH[3]}
-                preview=${BASH_REMATCH[4]}
+                preview=$( echo "${BASH_REMATCH[4]}" | xargs)
 
                 echo -n "%@$filename|$range_line.$range_col,$range_line.$range_col|$preview@"
             fi
