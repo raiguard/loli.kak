@@ -60,16 +60,11 @@ hook global WinDisplay .* %{
 # Update the master list based on updates to the range-specs
 hook global User LoliBufChange %{
     evaluate-commands %sh{
-        # Save the current list to an array
-        declare -a global_list
-        eval set -- $kak_quoted_opt_loli_global_list
-        while [ $# -gt 0 ]; do
-            global_list+=("$1")
-            shift
-        done
+        # Save the current ranges to an array
+        eval "global_list=($kak_quoted_opt_loli_global_list)"
 
         # Set the current ranges to the environment
-        eval set -- $kak_quoted_opt_loli_global_ranges
+        eval "set -- $kak_quoted_opt_loli_global_ranges"
         # And skip the timestamp
         shift
 
@@ -83,6 +78,7 @@ hook global User LoliBufChange %{
             # For now, we will assume that the previews do not have pipes | in them
             preview="${location##*|}"
             location="${location%|*}"
+
             current_range="${location##*|}"
             location="${location%|*}"
             filename="${location##*|}"
