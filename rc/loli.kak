@@ -73,29 +73,30 @@ hook global User LoliBufChange %{
         # And skip the timestamp
         shift
 
-        list_regex="^(.*?)\|([0-9]*?\.[0-9]*?,[0-9]*?\.[0-9]*?)\|(.*)$"
-        range_regex="^([0-9]*?\.[0-9]*?,[0-9]*?\.[0-9]*?)\|(.*)$"
-
         # Begin set-option command
         echo -n "set-option global loli_global_list "
 
         for i in "${!global_list[@]}"; do
-            # Escape the delimiter and % to avoid expansions
             location=$(echo "${global_list[$i]}" | sed "s/@/@@/g")
-            if [[ "$location" =~ $list_regex ]]; then
-                # Check that this location is in the current buffer
-                bufname=${BASH_REMATCH[1]}
-                preview=${BASH_REMATCH[3]}
-                if [ "$bufname" == "$kak_bufname" ] && [[ "$1" =~ $range_regex ]]; then
-                    # Add the potentially updated location
-                    range="${BASH_REMATCH[1]}"
-                    echo -n "%@${bufname}|${range}|${preview}@ "
-                    # Move to the next range
-                    shift
-                else
-                    # Append the same location
-                    echo -n "%@$location@ "
-                fi
+            location_original="$location"
+
+            # For now, we will assume that the previews do not have pipes | in them
+            preview="${location##*|}"
+            location="${location%|*}"
+            current_range="${location##*|}"
+            location="${location%|*}"
+            filename="${location##*|}"
+
+            new_range=${1%|*}
+
+            if [ "$filename" == "$kak_bufname" ] && [ "$new_range" != "$current_range" ]; then
+                # Add the updated range
+                echo -n "%@$filename|$new_range|$preview@ "
+                # Move to the next range
+                shift
+            else
+                # Add the original range
+                echo -n "%@$location_original@ "
             fi
         done
     }
