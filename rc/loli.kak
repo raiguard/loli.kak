@@ -79,6 +79,7 @@ hook global User LoliBufChange %{
             preview="${location##*|}"
             location="${location%|*}"
 
+            # FIXME: The ranges are getting duplicated upwards somehow
             current_range="${location##*|}"
             location="${location%|*}"
             filename="${location##*|}"
