@@ -79,7 +79,6 @@ hook global User LoliBufChange %{
             preview="${location##*|}"
             location="${location%|*}"
 
-            # FIXME: The ranges are getting duplicated upwards somehow
             current_range="${location##*|}"
             location="${location%|*}"
             filename="${location##*|}"
@@ -89,11 +88,13 @@ hook global User LoliBufChange %{
             if [ "$filename" == "$kak_bufname" ] && [ "$new_range" != "$current_range" ]; then
                 # Add the updated range
                 echo -n "%@$filename|$new_range|$preview@ "
-                # Move to the next range
-                shift
             else
                 # Add the original range
                 echo -n "%@$location_original@ "
+            fi
+            if [ "$filename" == "$kak_bufname" ]; then
+                # Move to the next range
+                shift
             fi
         done
     }
