@@ -45,23 +45,30 @@ hook global NormalIdle .* %{
     }
 }
 
-# Add highlighter for the ranges
-hook global WinCreate .* %{
-    hook -once -always global WinDisplay .* %{
-        add-highlighter window/ ranges loli_global_ranges
-    }
-}
+# # Add highlighter for the ranges
+# hook global WinCreate .* %{
+#     hook -once -always global WinDisplay .* %{
+#         add-highlighter window/ ranges loli_global_ranges
+#     }
+# }
 
-# Update ranges that might have changed when the window was dormant
-hook global WinDisplay .* %{
-    loli-update-ranges
-}
+# # Update ranges that might have changed when the window was dormant
+# hook global WinDisplay .* %{
+#     loli-update-ranges
+# }
 
 # Update the master list based on updates to the range-specs
 hook global User LoliBufChange %{
-    evaluate-commands %sh{
-        # Save the current list to an array
-        eval "global_list=($kak_quoted_opt_loli_global_list)"
+    echo -debug %sh{
+        # Save the current list
+        eval "set -- $kak_quoted_opt_loli_global_list"
+        list_len=$#
+        i=0
+        while [ "$#" -gt 0 ]; do
+            i=$((i+1))
+            eval "list_$i=\"$1\""
+            shift
+        done
 
         # Set the current ranges to the environment
         eval "set -- $kak_quoted_opt_loli_global_ranges"
@@ -71,9 +78,10 @@ hook global User LoliBufChange %{
         # Begin set-option command
         echo -n "set-option global loli_global_list "
 
-        for i in "${!global_list[@]}"; do
-            location=$(echo "${global_list[$i]}" | sed "s/@/@@/g")
-            location_original="$location"
+        for i in $(seq 1 $list_len); do
+            eval "location=\$list_$i"
+            location=$(echo "$location" | sed "s/@/@@/g")
+            location_original=$location
 
             # For now, we will assume that the previews do not have pipes | in them
             preview="${location##*|}"
@@ -85,14 +93,14 @@ hook global User LoliBufChange %{
 
             new_range=${1%|*}
 
-            if [ "$filename" == "$kak_bufname" ] && [ "$new_range" != "$current_range" ]; then
+            if [ "$filename" = "$kak_bufname" ] && [ "$new_range" != "$current_range" ]; then
                 # Add the updated range
                 echo -n "%@$filename|$new_range|$preview@ "
             else
                 # Add the original range
                 echo -n "%@$location_original@ "
             fi
-            if [ "$filename" == "$kak_bufname" ]; then
+            if [ "$filename" = "$kak_bufname" ]; then
                 # Move to the next range
                 shift
             fi
@@ -101,232 +109,242 @@ hook global User LoliBufChange %{
 }
 
 hook global GlobalSetOption loli_global_list=.* %{
-    loli-update-all-ranges
+    # loli-update-all-ranges
 }
 
 # COMMANDS
 
-# Create a range-specs for the current window
-define-command -hidden loli-update-ranges %{
-    evaluate-commands %sh{
-        regex="^(.*?)\|([0-9]*?\.[0-9]*?,[0-9]*?\.[0-9]*?)\|(.*)$"
-        # Loop over the list
-        eval set -- "$kak_quoted_opt_loli_global_list"
-        # Begin the command
-        echo -n "set-option window loli_global_ranges $kak_timestamp "
-        while [ $# -gt 0 ]; do
-            if [[ "$1" =~ $regex ]]; then
-                # Check that this item is in the current buffer
-                bufname=${BASH_REMATCH[1]}
-                if [ "$bufname" == "$kak_bufname" ]; then
-                    # Add the range to be displayed and/or updated
-                    range=${BASH_REMATCH[2]}
-                    preview=${BASH_REMATCH[3]}
-                    echo -n "'${range}|LoliLocation' "
-                fi
-            fi
-            shift
-        done
-    }
-}
+# range=${1%|*}
 
-# Update all currently displayed windows
-define-command -hidden loli-update-all-ranges %{
-    evaluate-commands %sh{
-        eval set -- $kak_quoted_client_list
-        while [ $# -gt 0 ]; do
-            echo "evaluate-commands -client $1 loli-update-ranges"
-            shift
-        done
-    }
-}
+# range_start=${range%,*}
+# range_start_line=${range_start%.*}
+# range_start_col=${range_start#*.}
 
-define-command loli-global-open \
--docstring "open the global location list buffer" \
-%{
-    evaluate-commands -try-client %opt{toolsclient} -save-regs '"' %sh{
-        regex="^(.*?)\|([0-9]*?)\.([0-9]*?),([0-9]*?)\.([0-9]*?)\|(.*)$"
-        eval set -- "$kak_quoted_opt_loli_global_list"
+# range_end=${range#*,}
+# range_end_line=${range_end%.*}
+# range_end_col=${range_end#*.}
 
-        content=""
-        while [ $# -gt 0 ]; do
-            if [[ "$1" =~ $regex ]]; then
-                bufname=${BASH_REMATCH[1]}
-                range_start_line=${BASH_REMATCH[2]}
-                range_start_column=${BASH_REMATCH[3]}
-                preview=${BASH_REMATCH[6]}
-                # This is ugly, but it works
-                content="${content}${bufname}|${range_start_line}:${range_start_column}| ${preview}
-"
-            fi
-            shift
-        done
+# # Create a range-specs for the current window
+# define-command -hidden loli-update-ranges %{
+#     evaluate-commands %sh{
+#         # Loop over the list
+#         eval set -- "$kak_quoted_opt_loli_global_list"
+#         # Begin the command
+#         echo -n "set-option window loli_global_ranges $kak_timestamp "
+#         while [ $# -gt 0 ]; do
+#             # TODO: Check for pipes in bufname and preview
+#             bufname=${1#*|}
+#             range=${1%|*}
 
-        output=$(mktemp -d "${TMPDIR:-/tmp}"/kak-loli.XXXXXXXX)/fifo
-        mkfifo ${output}
+#             # Check that this item is in the current buffer
+#             if [ "$bufname" == "$kak_bufname" ]; then
+#                 # Add the range to be displayed and/or updated
+#                 range=${BASH_REMATCH[2]}
+#                 preview=${BASH_REMATCH[3]}
+#                 echo -n "'${range}|LoliLocation' "
+#             fi
+#             shift
+#         done
+#     }
+# }
 
-        ( printf "%s" "$content" | perl -pe "chomp if eof" | sed "s/@/@@/" | tr -d '\r' > ${output} 2>&1 & ) > /dev/null 2>&1 < /dev/null
+# # Update all currently displayed windows
+# define-command -hidden loli-update-all-ranges %{
+#     evaluate-commands %sh{
+#         eval set -- $kak_quoted_client_list
+#         while [ $# -gt 0 ]; do
+#             echo "evaluate-commands -client $1 loli-update-ranges"
+#             shift
+#         done
+#     }
+# }
 
-        echo "
-            edit! -fifo ${output} *loli-global*
-            set-option buffer filetype loli
-            set-option buffer readonly true
-            hook -always -once buffer BufCloseFifo .* %{ nop %sh{ rm -r $(dirname ${output}) } }
-            map buffer normal <ret> ': loli-global-jump %val{cursor_line}<ret>'
-        "
-    }
-}
+# define-command loli-global-open \
+# -docstring "open the global location list buffer" \
+# %{
+#     evaluate-commands -try-client %opt{toolsclient} -save-regs '"' %sh{
+#         regex="^(.*?)\|([0-9]*?)\.([0-9]*?),([0-9]*?)\.([0-9]*?)\|(.*)$"
+#         eval set -- "$kak_quoted_opt_loli_global_list"
 
-define-command loli-global-close \
--docstring "close the global location list buffer" \
-%{
-    try %{
-        evaluate-commands -buffer *loli-global* delete-buffer
-    } catch %{
-        echo -markup "{Error}Global list is not open"
-    }
-}
+#         content=""
+#         while [ $# -gt 0 ]; do
+#             if [[ "$1" =~ $regex ]]; then
+#                 bufname=${BASH_REMATCH[1]}
+#                 range_start_line=${BASH_REMATCH[2]}
+#                 range_start_column=${BASH_REMATCH[3]}
+#                 preview=${BASH_REMATCH[6]}
+#                 # This is ugly, but it works
+#                 content="${content}${bufname}|${range_start_line}:${range_start_column}| ${preview}
+# "
+#             fi
+#             shift
+#         done
 
-define-command loli-global-jump \
--params 1 \
--docstring "jump to the given index in the global location list" \
-%{
-    evaluate-commands -try-client %opt{jumpclient} %sh{
-        index=$1
-        location=""
-        eval set -- $kak_quoted_opt_loli_global_list
-        if [ $index -lt 1 ] || [ $index -gt $# ]; then
-            echo "echo -markup '{Error}Invalid index'"
-            return
-        fi
-        for _ in $(seq 1 $index); do
-            if [ $# -gt 0 ]; then
-                location=$(echo "$1" | sed "s/@/@@/g")
-                shift
-            else
-                echo "echo -markup '{Error}Invalid index'"
-                return
-            fi
-        done
-        regex="^(.*?)\|([0-9]*?)\.([0-9]*?),.*$"
-        if [[ "$location" =~ $regex ]]; then
-            bufname=${BASH_REMATCH[1]}
-            row=${BASH_REMATCH[2]}
-            col=${BASH_REMATCH[3]}
+#         output=$(mktemp -d "${TMPDIR:-/tmp}"/kak-loli.XXXXXXXX)/fifo
+#         mkfifo ${output}
 
-            echo "
-                set-option global loli_global_index $index
-                edit '$bufname' $row $col
-            "
-        fi
-    }
-}
+#         ( printf "%s" "$content" | perl -pe "chomp if eof" | sed "s/@/@@/" | tr -d '\r' > ${output} 2>&1 & ) > /dev/null 2>&1 < /dev/null
 
-define-command loli-global-next \
--docstring "jump to the next location in the global list" \
-%{
-    loli-global-jump %sh{ expr $kak_opt_loli_global_index + 1 }
-}
+#         echo "
+#             edit! -fifo ${output} *loli-global*
+#             set-option buffer filetype loli
+#             set-option buffer readonly true
+#             hook -always -once buffer BufCloseFifo .* %{ nop %sh{ rm -r $(dirname ${output}) } }
+#             map buffer normal <ret> ': loli-global-jump %val{cursor_line}<ret>'
+#         "
+#     }
+# }
 
-define-command loli-global-prev \
--docstring "jump to the previous location in the global list" \
-%{
-    loli-global-jump %sh{ expr $kak_opt_loli_global_index - 1 }
-}
+# define-command loli-global-close \
+# -docstring "close the global location list buffer" \
+# %{
+#     try %{
+#         evaluate-commands -buffer *loli-global* delete-buffer
+#     } catch %{
+#         echo -markup "{Error}Global list is not open"
+#     }
+# }
 
-define-command loli-global-first \
--docstring "jump to the first location in the global list" \
-%{
-    loli-global-jump 1
-}
+# define-command loli-global-jump \
+# -params 1 \
+# -docstring "jump to the given index in the global location list" \
+# %{
+#     evaluate-commands -try-client %opt{jumpclient} %sh{
+#         index=$1
+#         location=""
+#         eval set -- $kak_quoted_opt_loli_global_list
+#         if [ $index -lt 1 ] || [ $index -gt $# ]; then
+#             echo "echo -markup '{Error}Invalid index'"
+#             return
+#         fi
+#         for _ in $(seq 1 $index); do
+#             if [ $# -gt 0 ]; then
+#                 location=$(echo "$1" | sed "s/@/@@/g")
+#                 shift
+#             else
+#                 echo "echo -markup '{Error}Invalid index'"
+#                 return
+#             fi
+#         done
+#         regex="^(.*?)\|([0-9]*?)\.([0-9]*?),.*$"
+#         if [[ "$location" =~ $regex ]]; then
+#             bufname=${BASH_REMATCH[1]}
+#             row=${BASH_REMATCH[2]}
+#             col=${BASH_REMATCH[3]}
 
-define-command loli-global-last \
--docstring "jump to the last location in the global list" \
-%{
-    loli-global-jump %sh{
-        eval set -- $kak_quoted_opt_loli_global_list
-        echo "$#"
-    }
-}
+#             echo "
+#                 set-option global loli_global_index $index
+#                 edit '$bufname' $row $col
+#             "
+#         fi
+#     }
+# }
 
-# TODO: Perhaps find a way to deduplicate this?
+# define-command loli-global-next \
+# -docstring "jump to the next location in the global list" \
+# %{
+#     loli-global-jump %sh{ expr $kak_opt_loli_global_index + 1 }
+# }
 
-define-command loli-global-before \
--docstring "jump to the closest location before the current selection" \
-%{
-    evaluate-commands %sh{
-        regex="^.*?\|([0-9]*?)\.([0-9]*?),.*$"
-        eval set -- $kak_quoted_opt_loli_global_list
-        for (( i=$#; i>0; i-- )); do
-            if [[ "${!i}" =~ $regex ]]; then
-                loc_line=${BASH_REMATCH[1]}
-                loc_col=${BASH_REMATCH[2]}
-                if [ $loc_line -eq $kak_cursor_line -a $loc_col -lt $kak_cursor_column ] || [ $loc_line -lt $kak_cursor_line ]; then
-                    echo "loli-global-jump ${i}"
-                    return
-                fi
-            fi
-        done
+# define-command loli-global-prev \
+# -docstring "jump to the previous location in the global list" \
+# %{
+#     loli-global-jump %sh{ expr $kak_opt_loli_global_index - 1 }
+# }
 
-        echo "fail 'No location found'"
-    }
-}
+# define-command loli-global-first \
+# -docstring "jump to the first location in the global list" \
+# %{
+#     loli-global-jump 1
+# }
 
-define-command loli-global-after \
--docstring "jump to the closest location after the current selection" \
-%{
-    evaluate-commands %sh{
-        regex="^.*?\|([0-9]*?)\.([0-9]*?),.*$"
-        eval set -- $kak_quoted_opt_loli_global_list
-        declare -i i=0
-        while [ $# -gt 0 ]; do
-            if [[ "$1" =~ $regex ]]; then
-                i+=1
-                loc_line=${BASH_REMATCH[1]}
-                loc_col=${BASH_REMATCH[2]}
-                if [ $loc_line -eq $kak_cursor_line -a $loc_col -gt $kak_cursor_column ] || [ $loc_line -gt $kak_cursor_line ]; then
-                    echo "loli-global-jump ${i}"
-                    return
-                fi
-            fi
-            shift
-        done
+# define-command loli-global-last \
+# -docstring "jump to the last location in the global list" \
+# %{
+#     loli-global-jump %sh{
+#         eval set -- $kak_quoted_opt_loli_global_list
+#         echo "$#"
+#     }
+# }
 
-        echo "fail 'No location found'"
-    }
-}
+# # TODO: Perhaps find a way to deduplicate this?
 
-define-command loli-global-vanilla-buffer \
--docstring "create a location list from the contents of the current grep-like buffer" \
-%{
-    execute-keys <percent>
-    evaluate-commands %sh{
-        line_regex="^(.*?):([0-9]*?):([0-9]*?):(.*)$"
-        echo -n "set-option global loli_global_list "
-        while IFS= read -r line; do
-            line=$( echo $line | sed 's/@/@@/g' )
-            if [[ "$line" =~ $line_regex ]]; then
-                filename=${BASH_REMATCH[1]}
-                range_line=${BASH_REMATCH[2]}
-                range_col=${BASH_REMATCH[3]}
-                preview=$( echo "${BASH_REMATCH[4]}" | xargs)
+# define-command loli-global-before \
+# -docstring "jump to the closest location before the current selection" \
+# %{
+#     evaluate-commands %sh{
+#         regex="^.*?\|([0-9]*?)\.([0-9]*?),.*$"
+#         eval set -- $kak_quoted_opt_loli_global_list
+#         for (( i=$#; i>0; i-- )); do
+#             if [[ "${!i}" =~ $regex ]]; then
+#                 loc_line=${BASH_REMATCH[1]}
+#                 loc_col=${BASH_REMATCH[2]}
+#                 if [ $loc_line -eq $kak_cursor_line -a $loc_col -lt $kak_cursor_column ] || [ $loc_line -lt $kak_cursor_line ]; then
+#                     echo "loli-global-jump ${i}"
+#                     return
+#                 fi
+#             fi
+#         done
 
-                echo -n "%@$filename|$range_line.$range_col,$range_line.$range_col|$preview@"
-            fi
-        done <<< "$kak_selection"
-    }
-}
+#         echo "fail 'No location found'"
+#     }
+# }
 
-define-command loli-add-aliases \
--docstring "add useful command aliases for loli" \
-%{
-    alias global gopen loli-global-open
-    alias global gclose loli-global-close
-    alias global gjump loli-global-jump
-    alias global gnext loli-global-next
-    alias global gprev loli-global-prev
-    alias global gfirst loli-global-first
-    alias global glast loli-global-last
-    alias global gbefore loli-global-before
-    alias global gafter loli-global-after
-}
+# define-command loli-global-after \
+# -docstring "jump to the closest location after the current selection" \
+# %{
+#     evaluate-commands %sh{
+#         regex="^.*?\|([0-9]*?)\.([0-9]*?),.*$"
+#         eval set -- $kak_quoted_opt_loli_global_list
+#         declare -i i=0
+#         while [ $# -gt 0 ]; do
+#             if [[ "$1" =~ $regex ]]; then
+#                 i+=1
+#                 loc_line=${BASH_REMATCH[1]}
+#                 loc_col=${BASH_REMATCH[2]}
+#                 if [ $loc_line -eq $kak_cursor_line -a $loc_col -gt $kak_cursor_column ] || [ $loc_line -gt $kak_cursor_line ]; then
+#                     echo "loli-global-jump ${i}"
+#                     return
+#                 fi
+#             fi
+#             shift
+#         done
+
+#         echo "fail 'No location found'"
+#     }
+# }
+
+# define-command loli-global-vanilla-buffer \
+# -docstring "create a location list from the contents of the current grep-like buffer" \
+# %{
+#     execute-keys <percent>
+#     evaluate-commands %sh{
+#         line_regex="^(.*?):([0-9]*?):([0-9]*?):(.*)$"
+#         echo -n "set-option global loli_global_list "
+#         while IFS= read -r line; do
+#             line=$( echo $line | sed 's/@/@@/g' )
+#             if [[ "$line" =~ $line_regex ]]; then
+#                 filename=${BASH_REMATCH[1]}
+#                 range_line=${BASH_REMATCH[2]}
+#                 range_col=${BASH_REMATCH[3]}
+#                 preview=$( echo "${BASH_REMATCH[4]}" | xargs)
+
+#                 echo -n "%@$filename|$range_line.$range_col,$range_line.$range_col|$preview@"
+#             fi
+#         done <<< "$kak_selection"
+#     }
+# }
+
+# define-command loli-add-aliases \
+# -docstring "add useful command aliases for loli" \
+# %{
+#     alias global gopen loli-global-open
+#     alias global gclose loli-global-close
+#     alias global gjump loli-global-jump
+#     alias global gnext loli-global-next
+#     alias global gprev loli-global-prev
+#     alias global gfirst loli-global-first
+#     alias global glast loli-global-last
+#     alias global gbefore loli-global-before
+#     alias global gafter loli-global-after
+# }
