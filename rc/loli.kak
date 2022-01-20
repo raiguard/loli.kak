@@ -83,24 +83,22 @@ hook global User LoliBufChange %{
             location=$(echo "$location" | sed "s/@/@@/g")
             location_original=$location
 
-            # For now, we will assume that the previews do not have pipes | in them
-            preview="${location##*|}"
-            location="${location%|*}"
-
-            current_range="${location##*|}"
-            location="${location%|*}"
-            filename="${location##*|}"
+            # TODO: Figure out how to handle pipes in bufnames
+            bufname=${location%%|*}
+            right=${location#*|}
+            current_range=${right%%|*}
+            preview=${right#*|}
 
             new_range=${1%%|*}
 
-            if [ "$filename" = "$kak_bufname" ] && [ "$new_range" != "$current_range" ]; then
+            if [ "$bufname" = "$kak_bufname" ] && [ "$new_range" != "$current_range" ]; then
                 # Add the updated range
-                echo -n "%@$filename|$new_range|$preview@ "
+                echo -n "%@$bufname|$new_range|$preview@ "
             else
                 # Add the original range
                 echo -n "%@$location_original@ "
             fi
-            if [ "$filename" = "$kak_bufname" ]; then
+            if [ "$bufname" = "$kak_bufname" ]; then
                 # Move to the next range
                 shift
             fi
@@ -124,8 +122,8 @@ define-command -hidden loli-update-ranges %{
         while [ $# -gt 0 ]; do
             # TODO: Check for pipes in bufname and preview
             bufname=${1%%|*}
-            latter=${1#*|}
-            range=${latter%|*}
+            right=${1#*|}
+            range=${right%|*}
 
             # Check that this item is in the current buffer
             if [ "$bufname" = "$kak_bufname" ]; then
@@ -158,9 +156,9 @@ define-command loli-global-open \
         while [ $# -gt 0 ]; do
             # TODO: Account for pipes in bufname and description
             bufname=${1%%|*}
-            latter=${1#*|}
-            range=${latter%|*}
-            preview=${latter#*|}
+            right=${1#*|}
+            range=${right%|*}
+            preview=${right#*|}
 
             range_start=${range%,*}
             range_start_line=${range_start%.*}
@@ -218,7 +216,7 @@ define-command loli-global-jump \
         # TODO: Account for pipes in bufname and description
         bufname=${1%%|*}
         latter=${1#*|}
-        range=${latter%|*}
+        range=${latter%%|*}
         preview=${latter#*|}
 
         range_start=${range%,*}
