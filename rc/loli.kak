@@ -261,50 +261,65 @@ define-command loli-global-last \
 
 # TODO: Perhaps find a way to deduplicate this?
 
-# define-command loli-global-before \
-# -docstring "jump to the closest location before the current selection" \
-# %{
-#     evaluate-commands %sh{
-#         regex="^.*?\|([0-9]*?)\.([0-9]*?),.*$"
-#         eval set -- $kak_quoted_opt_loli_global_list
-#         for (( i=$#; i>0; i-- )); do
-#             if [[ "${!i}" =~ $regex ]]; then
-#                 loc_line=${BASH_REMATCH[1]}
-#                 loc_col=${BASH_REMATCH[2]}
-#                 if [ $loc_line -eq $kak_cursor_line -a $loc_col -lt $kak_cursor_column ] || [ $loc_line -lt $kak_cursor_line ]; then
-#                     echo "loli-global-jump ${i}"
-#                     return
-#                 fi
-#             fi
-#         done
+define-command loli-global-before \
+-docstring "jump to the closest location before the current selection" \
+%{
+    evaluate-commands %sh{
+        eval set -- $kak_quoted_opt_loli_global_list
+        for i in $(seq $# -1 1); do
+            eval "location=\$$i"
+            # TODO: Account for pipes in bufname and description
+            bufname=${location%%|*}
 
-#         echo "fail 'No location found'"
-#     }
-# }
+            if [ "$bufname" = "$kak_bufname" ]; then
+                latter=${location#*|}
+                range=${latter%|*}
+                preview=${latter#*|}
 
-# define-command loli-global-after \
-# -docstring "jump to the closest location after the current selection" \
-# %{
-#     evaluate-commands %sh{
-#         regex="^.*?\|([0-9]*?)\.([0-9]*?),.*$"
-#         eval set -- $kak_quoted_opt_loli_global_list
-#         declare -i i=0
-#         while [ $# -gt 0 ]; do
-#             if [[ "$1" =~ $regex ]]; then
-#                 i+=1
-#                 loc_line=${BASH_REMATCH[1]}
-#                 loc_col=${BASH_REMATCH[2]}
-#                 if [ $loc_line -eq $kak_cursor_line -a $loc_col -gt $kak_cursor_column ] || [ $loc_line -gt $kak_cursor_line ]; then
-#                     echo "loli-global-jump ${i}"
-#                     return
-#                 fi
-#             fi
-#             shift
-#         done
+                range_start=${range%,*}
+                range_start_line=${range_start%.*}
+                range_start_col=${range_start#*.}
 
-#         echo "fail 'No location found'"
-#     }
-# }
+                if [ $range_start_line -eq $kak_cursor_line -a $range_start_col -lt $kak_cursor_column ] || [ $range_start_line -lt $kak_cursor_line ]; then
+                    echo "loli-global-jump ${i}"
+                    return
+                fi
+            fi
+        done
+
+        echo "fail 'No location found'"
+    }
+}
+
+define-command loli-global-after \
+-docstring "jump to the closest location after the current selection" \
+%{
+    evaluate-commands %sh{
+        eval set -- $kak_quoted_opt_loli_global_list
+        for i in $(seq 1 $#); do
+            eval "location=\$$i"
+            # TODO: Account for pipes in bufname and description
+            bufname=${location%%|*}
+
+            if [ "$bufname" = "$kak_bufname" ]; then
+                latter=${location#*|}
+                range=${latter%|*}
+                preview=${latter#*|}
+
+                range_start=${range%,*}
+                range_start_line=${range_start%.*}
+                range_start_col=${range_start#*.}
+
+                if [ $range_start_line -eq $kak_cursor_line -a $range_start_col -gt $kak_cursor_column ] || [ $range_start_line -gt $kak_cursor_line ]; then
+                    echo "loli-global-jump ${i}"
+                    return
+                fi
+            fi
+        done
+
+        echo "fail 'No location found'"
+    }
+}
 
 # define-command loli-global-vanilla-buffer \
 # -docstring "create a location list from the contents of the current grep-like buffer" \
@@ -337,6 +352,6 @@ define-command loli-add-aliases \
     alias global gprev loli-global-prev
     alias global gfirst loli-global-first
     alias global glast loli-global-last
-    # alias global gbefore loli-global-before
-    # alias global gafter loli-global-after
+    alias global gbefore loli-global-before
+    alias global gafter loli-global-after
 }
