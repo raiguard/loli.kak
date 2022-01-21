@@ -8,16 +8,10 @@ set-face global LoliLocation ""
 
 set-face global LoliSelectedLine default+b
 
-# HIGHLIGHTERS
-
-hook -group loli-highlight global WinSetOption filetype=loli %{
-    add-highlighter window/loli group
-    add-highlighter window/loli/ regex "^(.*?)\|(\d+:\d+)\|?" 1:blue 2:comment
-    add-highlighter window/loli/ line %{%opt{loli_global_index}} LoliSelectedLine
-    hook -once -always window WinSetOption filetype=.* %{ remove-highlighter window/loli }
-}
-
 # OPTIONS
+
+# The path to the kak-loli binary
+declare-option -hidden str loli_cmd
 
 # Str-list to hold the master copy of the list
 declare-option -hidden str-list loli_global_list
@@ -34,28 +28,40 @@ declare-option -hidden int loli_prev_timestamp 0
 
 # HOOKS
 
-# # LoliBufChange
-# # This hook fires whenever a window's timestamp changes, indicating that the buffer contents were modified
-# hook global NormalIdle .* %{
-#     evaluate-commands %sh{
-#         if [ "$kak_timestamp" -gt "$kak_opt_loli_prev_timestamp" ]; then
-#             printf 'trigger-user-hook LoliBufChange\n'
-#             printf 'set-option buffer loli_prev_timestamp %s\n'  "$kak_timestamp"
-#         fi
-#     }
-# }
+# Loli buffer highlighters
+hook -group loli-highlight global WinSetOption filetype=loli %{
+    add-highlighter window/loli group
+    add-highlighter window/loli/ regex "^(.*?)\|(\d+:\d+)\|?" 1:blue 2:comment
+    add-highlighter window/loli/ line %{%opt{loli_global_index}} LoliSelectedLine
+    hook -once -always window WinSetOption filetype=.* %{ remove-highlighter window/loli }
+}
 
-# # Add highlighter for the ranges
-# hook global WinCreate .* %{
-#     hook -once -always global WinDisplay .* %{
-#         add-highlighter window/ ranges loli_global_ranges
-#     }
-# }
+# Location highlighters
+hook global WinCreate .* %{
+    hook -once -always global WinDisplay .* %{
+        add-highlighter window/ ranges loli_global_ranges
+    }
+}
 
-# # Update ranges that might have changed when the window was dormant
-# hook global WinDisplay .* %{
-#     loli-update-ranges
-# }
+# LoliBufChange
+# This hook fires whenever a window's timestamp changes, indicating that the buffer contents were modified
+hook global NormalIdle .* %{
+    evaluate-commands %sh{
+        if [ "$kak_timestamp" -gt "$kak_opt_loli_prev_timestamp" ]; then
+            printf 'trigger-user-hook LoliBufChange\n'
+            printf 'set-option buffer loli_prev_timestamp %s\n'  "$kak_timestamp"
+        fi
+    }
+}
+
+hook global User LoliBufChange %{
+    echo -debug %sh{
+        if [ -n "$kak_opt_loli_global_list" ]; then
+            eval "set -- $kak_quoted_opt_loli_global_list"
+            $kak_opt_loli_cmd update-list --ranges "$kak_opt_loli_global_ranges" --list "$@"
+        fi
+    }
+}
 
 # # Update the master list based on updates to the range-specs
 # hook global User LoliBufChange %{
@@ -104,6 +110,11 @@ declare-option -hidden int loli_prev_timestamp 0
 #             fi
 #         done
 #     }
+# }
+
+# # Update ranges that might have changed when the window was dormant
+# hook global WinDisplay .* %{
+#     loli-update-ranges
 # }
 
 # hook global GlobalSetOption loli_global_list=.* %{
