@@ -1,5 +1,6 @@
 use anyhow::anyhow;
 use anyhow::Result;
+use itertools::Itertools;
 use regex::bytes::Regex;
 use std::env;
 use std::env::Args;
@@ -10,6 +11,7 @@ use std::str::FromStr;
 use thiserror::Error;
 
 const KAKSCRIPT: &str = include_str!("../rc/loli.kak");
+const SEPARATOR: &str = "§";
 
 fn main() -> Result<()> {
     let command = parse_args()?;
@@ -22,9 +24,33 @@ fn main() -> Result<()> {
             println!("{}", KAKSCRIPT);
             println!("set-option global loli_cmd {}", cmd);
         }
-        Command::UpdateList { list, ranges } => {
-            println!("{:#?}", ranges);
-            println!("{:#?}", list);
+        Command::UpdateList {
+            bufname,
+            list,
+            ranges,
+        } => {
+            let mut ranges = ranges.iter().skip(1);
+
+            let output: String = list
+                .iter()
+                .filter_map(|location| Location::from_str(location).ok())
+                .map(|mut location| {
+                    if location.bufname == bufname {
+                        let (range, _) = ranges
+                            .next()
+                            .expect("Range amount mismatch")
+                            .split_once("|")
+                            .expect("Invalid range format");
+                        location.range =
+                            KakouneRange::from_str(range).expect("Invalid range format");
+                    }
+                    location
+                })
+                .map(|location| format!("{}", location))
+                .map(|location| format!("%@{}@", location.replace("@", "@@")))
+                .join(" ");
+
+            println!("set-option global loli_global_list {}", output);
         }
     }
 
@@ -38,9 +64,15 @@ fn parse_args() -> Result<Command> {
     Ok(match subcommand.as_ref() {
         "init" => Command::Init,
         "update-list" => {
+            args.next();
+            let bufname = args.next().expect("A bufname is required");
             let ranges = parse_list(&mut args)?;
             let list = parse_list(&mut args)?;
-            Command::UpdateList { ranges, list }
+            Command::UpdateList {
+                bufname,
+                ranges,
+                list,
+            }
         }
         _ => return Err(anyhow!("Unrecognized subcommand: {}", subcommand)),
     })
@@ -69,11 +101,13 @@ fn parse_list(args: &mut Peekable<Skip<Args>>) -> Result<Vec<String>> {
 enum Command {
     Init,
     UpdateList {
+        bufname: String,
         list: Vec<String>,
         ranges: Vec<String>,
     },
 }
 
+#[derive(Debug)]
 struct Location {
     bufname: String,
     range: KakouneRange,
@@ -103,6 +137,13 @@ impl FromStr for Location {
     }
 }
 
+impl Display for Location {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}|{}|{}", self.bufname, self.range, self.preview)
+    }
+}
+
+#[derive(Debug)]
 struct KakouneRange {
     start: KakounePosition,
     end: KakounePosition,
@@ -126,6 +167,8 @@ impl Display for KakouneRange {
         write!(f, "{},{}", self.start, self.end)
     }
 }
+
+#[derive(Debug)]
 struct KakounePosition {
     line: usize,
     column: usize,

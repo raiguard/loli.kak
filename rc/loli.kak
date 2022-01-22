@@ -58,7 +58,7 @@ hook global User LoliBufChange %{
     echo -debug %sh{
         if [ -n "$kak_opt_loli_global_list" ]; then
             eval "set -- $kak_quoted_opt_loli_global_list"
-            $kak_opt_loli_cmd update-list --ranges "$kak_opt_loli_global_ranges" --list "$@"
+            $kak_opt_loli_cmd update-list --bufname "$kak_bufname" --ranges "$kak_opt_loli_global_ranges" --list "$@"
         fi
     }
 }
@@ -112,50 +112,50 @@ hook global User LoliBufChange %{
 #     }
 # }
 
-# # Update ranges that might have changed when the window was dormant
-# hook global WinDisplay .* %{
-#     loli-update-ranges
-# }
+# Update ranges that might have changed when the window was dormant
+hook global WinDisplay .* %{
+    loli-update-ranges
+}
 
-# hook global GlobalSetOption loli_global_list=.* %{
-#     loli-update-all-ranges
-# }
+hook global GlobalSetOption loli_global_list=.* %{
+    loli-update-all-ranges
+}
 
-# # COMMANDS
+# COMMANDS
 
-# # Create a range-specs for the current window
-# define-command -hidden loli-update-ranges %{
-#     evaluate-commands %sh{
-#         # Loop over the list
-#         eval set -- "$kak_quoted_opt_loli_global_list"
-#         # Begin the command
-#         echo -n "set-option window loli_global_ranges $kak_timestamp "
-#         while [ $# -gt 0 ]; do
-#             # TODO: Check for pipes in bufname and preview
-#             bufname=${1%%|*}
-#             right=${1#*|}
-#             range=${right%|*}
+# Create a range-specs for the current window
+define-command -hidden loli-update-ranges %{
+    evaluate-commands %sh{
+        # Loop over the list
+        eval set -- "$kak_quoted_opt_loli_global_list"
+        # Begin the command
+        echo -n "set-option window loli_global_ranges $kak_timestamp "
+        while [ $# -gt 0 ]; do
+            # TODO: Check for pipes in bufname and preview
+            bufname=${1%%|*}
+            right=${1#*|}
+            range=${right%|*}
 
-#             # Check that this item is in the current buffer
-#             if [ "$bufname" = "$kak_bufname" ]; then
-#                 # Add the range to be displayed and/or updated
-#                 echo -n "'$range|LoliLocation' "
-#             fi
-#             shift
-#         done
-#     }
-# }
+            # Check that this item is in the current buffer
+            if [ "$bufname" = "$kak_bufname" ]; then
+                # Add the range to be displayed and/or updated
+                echo -n "'$range|LoliLocation' "
+            fi
+            shift
+        done
+    }
+}
 
-# # Update all currently displayed windows
-# define-command -hidden loli-update-all-ranges %{
-#     evaluate-commands %sh{
-#         eval set -- $kak_quoted_client_list
-#         while [ $# -gt 0 ]; do
-#             echo "evaluate-commands -client $1 loli-update-ranges"
-#             shift
-#         done
-#     }
-# }
+# Update all currently displayed windows
+define-command -hidden loli-update-all-ranges %{
+    evaluate-commands %sh{
+        eval set -- $kak_quoted_client_list
+        while [ $# -gt 0 ]; do
+            echo "evaluate-commands -client $1 loli-update-ranges"
+            shift
+        done
+    }
+}
 
 # define-command loli-global-open \
 # -docstring "open the global location list buffer" \
