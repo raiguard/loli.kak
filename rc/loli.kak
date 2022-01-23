@@ -12,7 +12,7 @@ set-face global LoliSelectedLine default+b
 
 hook -group loli-highlight global WinSetOption filetype=loli %{
     add-highlighter window/loli group
-    add-highlighter window/loli/ regex "^(.*?)\|(\d+:\d+)\|?" 1:blue 2:comment
+    add-highlighter window/loli/ regex "^(.*?)\|(\d+:\d+)\|?" 1:function 2:comment
     add-highlighter window/loli/ line %{%opt{loli_global_index}} LoliSelectedLine
     hook -once -always window WinSetOption filetype=.* %{ remove-highlighter window/loli }
 }
@@ -335,11 +335,22 @@ define-command loli-global-vanilla-buffer \
             right=${right#*:}
             range_col=${right%%:*}
             right=${right#*:}
-            preview=$(echo "$right" | sed "s/@/@@/g" | xargs)
+            preview=$(echo "$right" | sed "s/@/@@/g" | sed -e 's/^[[:space:]]*//')
 
             echo -n "%@$bufname|$range_line.$range_col,$range_line.$range_col|$preview@ "
         done
     }
+}
+
+define-command loli-global-grep \
+-params .. \
+-docstring "run a grep and pipe the results into a location list" \
+%{
+    hook -once global BufReadFifo .* %{
+        loli-global-vanilla-buffer
+        delete-buffer
+    }
+    grep %arg{@}
 }
 
 define-command loli-add-aliases \
@@ -354,4 +365,5 @@ define-command loli-add-aliases \
     alias global glast loli-global-last
     alias global gbefore loli-global-before
     alias global gafter loli-global-after
+    alias global ggrep loli-global-grep
 }
