@@ -146,6 +146,10 @@ define-command -hidden loli-update-all-ranges %{
     }
 }
 
+define-command loli-global-clear %{
+    set-option global loli_global_list
+}
+
 define-command loli-global-open \
 -docstring "open the global location list buffer" \
 %{
@@ -346,16 +350,19 @@ define-command loli-global-grep \
 -params .. \
 -docstring "run a grep and pipe the results into a location list" \
 %{
-    hook -once global BufReadFifo .* %{
-        loli-global-vanilla-buffer
-        delete-buffer
+    evaluate-commands -draft %{
+        hook -once global BufReadFifo .* %{
+            loli-global-vanilla-buffer
+            delete-buffer
+        }
+        grep %arg{@}
     }
-    grep %arg{@}
 }
 
 define-command loli-add-aliases \
 -docstring "add useful command aliases for loli" \
 %{
+    alias global gclear loli-global-clear
     alias global gopen loli-global-open
     alias global gclose loli-global-close
     alias global gjump loli-global-jump
