@@ -1,3 +1,5 @@
+# THIS PROJECT HAS MOVED TO [SOURCEHUT](https://git.sr.ht/~raiguard/loli.kak)
+
 # loli.kak
 
 An implementation of proper [location lists](http://vimdoc.sourceforge.net/htmldoc/quickfix.html) for [Kakoune](https://kakoune.org).
